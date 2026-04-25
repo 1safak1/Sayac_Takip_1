@@ -6,9 +6,8 @@ function loadData() {
   if (!raw) return [];
   try {
     const data = JSON.parse(raw);
-    // Migration: If old data format (subscribers), convert or clear
     if (data.length > 0 && !data[0].hasOwnProperty('electricity')) {
-      return []; // Reset for new structure
+      return []; 
     }
     return data;
   } catch { return []; }
@@ -19,7 +18,7 @@ function saveData(facilities) {
 }
 
 let facilities = loadData();
-let activeTab = 'elektrik'; // 'elektrik' or 'su'
+let activeTab = 'elektrik'; 
 
 // ===== DOM References =====
 const addForm = document.getElementById('add-facility-form');
@@ -57,6 +56,7 @@ const toastMessage = document.getElementById('toast-message');
 
 // State
 let currentFacilityId = null;
+let editingReadingId = null; // null if adding new
 let deleteFacilityId = null;
 let openAccordionId = null;
 
@@ -82,7 +82,58 @@ function showToast(message) {
 function getLatestIndex(facility, type) {
   const readings = facility[type].readings;
   if (readings.length === 0) return facility[type].initialIndex;
-  return readings[readings.length - 1].index;
+  // Sort them by date to be sure
+  const sorted = [...readings].sort((a, b) => new Date(a.date) - new Date(b.date));
+  return sorted[sorted.length - 1].index;
+}
+
+/**
+ * Recalculates consumption for all readings of a specific type in a facility
+ * based on date sorting.
+ */
+function recalculateConsumptions(facility, type) {
+  const data = facility[type];
+  data.readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  let prevVal = data.initialIndex;
+  data.readings.forEach(r => {
+    r.consumption = r.index - prevVal;
+    prevVal = r.index;
+  });
+}
+
+/**
+ * Validates a new or edited index value based on its date position.
+ */
+function validateReading(facility, type, date, index, excludeId = null) {
+  const data = facility[type];
+  const targetDate = new Date(date);
+  
+  // Get all other readings sorted
+  const otherReadings = data.readings
+    .filter(r => r.id !== excludeId)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Find immediate previous and next readings
+  let prevReading = null;
+  let nextReading = null;
+  
+  for (let r of otherReadings) {
+    const rDate = new Date(r.date);
+    if (rDate < targetDate) {
+      prevReading = r;
+    } else if (rDate > targetDate && !nextReading) {
+      nextReading = r;
+    }
+  }
+  
+  const minAllowed = prevReading ? prevReading.index : data.initialIndex;
+  const maxAllowed = nextReading ? nextReading.index : Infinity;
+  
+  if (index < minAllowed) return { valid: false, msg: `Endeks, önceki tarihli kayıttan (${minAllowed}) küçük olamaz!` };
+  if (index > maxAllowed) return { valid: false, msg: `Endeks, sonraki tarihli kayıttan (${maxAllowed}) büyük olamaz!` };
+  
+  return { valid: true };
 }
 
 // ===== Render =====
@@ -104,14 +155,16 @@ function render() {
 
 function renderFacilityAccordion(f) {
   const isOpen = openAccordionId === f.id;
-  
   const currentData = f[activeTab];
-  const lastReading = currentData.readings[currentData.readings.length - 1];
+  
+  // Sort readings for display (newest first)
+  const sortedReadings = [...currentData.readings].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  const lastReading = sortedReadings[0];
   const currentIndex = lastReading ? lastReading.index : currentData.initialIndex;
   const lastConsumption = lastReading ? lastReading.consumption : 0;
   const totalConsumption = currentIndex - currentData.initialIndex;
 
-  // Header Summary (Always visible)
   const elecIndex = getLatestIndex(f, 'elektrik');
   const waterIndex = getLatestIndex(f, 'su');
 
@@ -161,7 +214,7 @@ function renderFacilityAccordion(f) {
           Yeni ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Endeksi Gir
         </button>
 
-        ${renderHistory(currentData.readings)}
+        ${renderHistory(sortedReadings, f.id)}
 
         <div class="facility-actions-row">
           <button class="btn-icon danger btn-delete" data-id="${f.id}" title="Tesisi Sil">
@@ -175,14 +228,22 @@ function renderFacilityAccordion(f) {
   `;
 }
 
-function renderHistory(readings) {
+function renderHistory(readings, facilityId) {
   if (readings.length === 0) return '';
 
-  const rows = [...readings].reverse().map(r => `
+  const rows = readings.map(r => `
     <tr>
       <td>${formatDate(r.date)}</td>
       <td>${r.index.toLocaleString('tr-TR')}</td>
       <td><span class="consumption-badge">${r.consumption.toLocaleString('tr-TR')}</span></td>
+      <td style="text-align: right;">
+        <button class="btn-icon btn-edit-reading" data-fid="${facilityId}" data-rid="${r.id}" title="Düzenle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn-icon danger btn-delete-reading" data-fid="${facilityId}" data-rid="${r.id}" title="Sil">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </td>
     </tr>
   `).join('');
 
@@ -191,7 +252,7 @@ function renderHistory(readings) {
       <div class="history-table-wrapper visible">
         <table class="history-table">
           <thead>
-            <tr><th>Tarih</th><th>Endeks</th><th>Tüketim</th></tr>
+            <tr><th>Tarih</th><th>Endeks</th><th>Tüketim</th><th style="text-align: right;">İşlem</th></tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
@@ -220,6 +281,20 @@ function attachEvents() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       openDeleteModal(btn.dataset.id);
+    });
+  });
+
+  document.querySelectorAll('.btn-edit-reading').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openIndexModal(btn.dataset.fid, btn.dataset.rid);
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-reading').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteReading(btn.dataset.fid, btn.dataset.rid);
     });
   });
 }
@@ -266,18 +341,35 @@ addForm.addEventListener('submit', (e) => {
 });
 
 // Index Modal Logic
-function openIndexModal(id) {
-  currentFacilityId = id;
-  const f = facilities.find(fac => fac.id === id);
+function openIndexModal(fid, rid = null) {
+  currentFacilityId = fid;
+  editingReadingId = rid;
+  
+  const f = facilities.find(fac => fac.id === fid);
   const data = f[activeTab];
-  const lastIdx = data.readings.length > 0 ? data.readings[data.readings.length - 1].index : data.initialIndex;
-
-  modalTitle.textContent = `${f.name} — ${activeTab.toUpperCase()} Endeksi`;
-  modalPrevIndex.textContent = lastIdx.toLocaleString('tr-TR');
-  newIndexInput.value = '';
-  readingDateInput.value = new Date().toISOString().split('T')[0];
+  
+  if (rid) {
+    const r = data.readings.find(x => x.id === rid);
+    modalTitle.textContent = `${f.name} — Kayıt Düzenle`;
+    newIndexInput.value = r.index;
+    readingDateInput.value = r.date.split('T')[0];
+    
+    // Find previous index relative to this date for UI
+    const others = data.readings.filter(x => x.id !== rid).sort((a,b) => new Date(a.date) - new Date(b.date));
+    let prev = data.initialIndex;
+    for(let x of others) {
+      if (new Date(x.date) < new Date(r.date)) prev = x.index;
+    }
+    modalPrevIndex.textContent = prev.toLocaleString('tr-TR');
+  } else {
+    const lastIdx = getLatestIndex(f, activeTab);
+    modalTitle.textContent = `${f.name} — ${activeTab.toUpperCase()} Endeksi`;
+    modalPrevIndex.textContent = lastIdx.toLocaleString('tr-TR');
+    newIndexInput.value = '';
+    readingDateInput.value = new Date().toISOString().split('T')[0];
+  }
+  
   consumptionPreview.style.display = 'none';
-
   modalOverlay.classList.add('active');
   setTimeout(() => newIndexInput.focus(), 100);
 }
@@ -285,51 +377,86 @@ function openIndexModal(id) {
 function closeIndexModal() {
   modalOverlay.classList.remove('active');
   currentFacilityId = null;
+  editingReadingId = null;
 }
 
 btnCloseModal.addEventListener('click', closeIndexModal);
 modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) closeIndexModal(); });
 
-newIndexInput.addEventListener('input', () => {
-  const f = facilities.find(fac => fac.id === currentFacilityId);
-  const data = f[activeTab];
-  const lastIdx = data.readings.length > 0 ? data.readings[data.readings.length - 1].index : data.initialIndex;
-  const val = parseInt(newIndexInput.value, 10);
+newIndexInput.addEventListener('input', updateConsumptionPreview);
+readingDateInput.addEventListener('input', updateConsumptionPreview);
 
-  if (!isNaN(val) && val >= lastIdx) {
+function updateConsumptionPreview() {
+  const f = facilities.find(fac => fac.id === currentFacilityId);
+  if (!f) return;
+  const data = f[activeTab];
+  const val = parseInt(newIndexInput.value, 10);
+  const date = readingDateInput.value;
+
+  if (!isNaN(val) && date) {
+    const others = data.readings.filter(x => x.id !== editingReadingId).sort((a,b) => new Date(a.date) - new Date(b.date));
+    let prev = data.initialIndex;
+    for(let x of others) {
+      if (new Date(x.date) < new Date(date)) prev = x.index;
+    }
     consumptionPreview.style.display = 'block';
-    previewValue.textContent = (val - lastIdx).toLocaleString('tr-TR');
+    previewValue.textContent = (val - prev).toLocaleString('tr-TR');
   } else {
     consumptionPreview.style.display = 'none';
   }
-});
+}
 
 indexForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const f = facilities.find(fac => fac.id === currentFacilityId);
   const data = f[activeTab];
-  const lastIdx = data.readings.length > 0 ? data.readings[data.readings.length - 1].index : data.initialIndex;
   const val = parseInt(newIndexInput.value, 10);
   const date = readingDateInput.value;
 
-  if (isNaN(val) || val < lastIdx) {
-    showToast('Hatalı endeks değeri!');
+  if (isNaN(val) || !date) {
+    showToast('Hatalı giriş!');
     return;
   }
 
-  data.readings.push({
-    date: new Date(date).toISOString(),
-    index: val,
-    consumption: val - lastIdx
-  });
+  // VALIDATION
+  const check = validateReading(f, activeTab, date, val, editingReadingId);
+  if (!check.valid) {
+    showToast(check.msg);
+    return;
+  }
 
+  if (editingReadingId) {
+    const r = data.readings.find(x => x.id === editingReadingId);
+    r.index = val;
+    r.date = new Date(date).toISOString();
+  } else {
+    data.readings.push({
+      id: generateId(),
+      date: new Date(date).toISOString(),
+      index: val,
+      consumption: 0 // Will be recalculated
+    });
+  }
+
+  recalculateConsumptions(f, activeTab);
   saveData(facilities);
   render();
   closeIndexModal();
-  showToast('Endeks kaydedildi');
+  showToast(editingReadingId ? 'Kayıt güncellendi' : 'Endeks kaydedildi');
 });
 
-// Delete Logic
+function deleteReading(fid, rid) {
+  const f = facilities.find(fac => fac.id === fid);
+  const data = f[activeTab];
+  data.readings = data.readings.filter(r => r.id !== rid);
+  
+  recalculateConsumptions(f, activeTab);
+  saveData(facilities);
+  render();
+  showToast('Kayıt silindi');
+}
+
+// Facility Delete Logic
 function openDeleteModal(id) {
   deleteFacilityId = id;
   const f = facilities.find(fac => fac.id === id);
