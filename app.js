@@ -1,7 +1,7 @@
 // ===== IndexedDB Wrapper =====
 const DB_NAME = 'TesisTakipDB';
-const STORE_NAME = 'facilities';
-const DB_VERSION = 1;
+const STORE_NAME = 'facilities_v2'; // New store for new structure
+const DB_VERSION = 2;
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -26,7 +26,7 @@ async function getStoredData() {
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get('data');
 
-    request.onsuccess = () => resolve(request.result || []);
+    request.onsuccess = () => resolve(request.result || { elektrik: [], su: [] });
     request.onerror = () => reject(request.error);
   });
 }
@@ -44,23 +44,18 @@ async function setStoredData(data) {
 }
 
 // ===== Data Management =====
-let facilities = [];
+let facilities = { elektrik: [], su: [] };
 let activeTab = 'elektrik'; 
 
 async function initApp() {
-  // Try to migrate from localStorage first
-  const localData = localStorage.getItem('tesis_takip_data');
-  if (localData) {
-    try {
-      facilities = JSON.parse(localData);
-      await setStoredData(facilities); // Move to IndexedDB
-      localStorage.removeItem('tesis_takip_data'); // Clean up
-      console.log('Migrated from localStorage to IndexedDB');
-    } catch (e) {
-      console.error('Migration failed', e);
-    }
+  const stored = await getStoredData();
+  
+  // Migration Check: If old structure (array) exists in old store or v1
+  if (Array.isArray(stored)) {
+    // This shouldn't happen with v2 store, but let's be safe if I used same store name
+    facilities = { elektrik: [], su: [] };
   } else {
-    facilities = await getStoredData();
+    facilities = stored;
   }
   
   render();
@@ -129,28 +124,25 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
-function getLatestIndex(facility, type) {
-  const readings = facility[type].readings;
-  if (readings.length === 0) return facility[type].initialIndex;
+function getLatestIndex(facility) {
+  const readings = facility.readings;
+  if (readings.length === 0) return facility.initialIndex;
   const sorted = [...readings].sort((a, b) => new Date(a.date) - new Date(b.date));
   return sorted[sorted.length - 1].index;
 }
 
-function recalculateConsumptions(facility, type) {
-  const data = facility[type];
-  data.readings.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
-  let prevVal = data.initialIndex;
-  data.readings.forEach(r => {
+function recalculateConsumptions(facility) {
+  facility.readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+  let prevVal = facility.initialIndex;
+  facility.readings.forEach(r => {
     r.consumption = r.index - prevVal;
     prevVal = r.index;
   });
 }
 
-function validateReading(facility, type, date, index, excludeId = null) {
-  const data = facility[type];
+function validateReading(facility, date, index, excludeId = null) {
   const targetDate = new Date(date);
-  const otherReadings = data.readings
+  const otherReadings = facility.readings
     .filter(r => r.id !== excludeId)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   
@@ -162,7 +154,7 @@ function validateReading(facility, type, date, index, excludeId = null) {
     else if (rDate > targetDate && !nextReading) nextReading = r;
   }
   
-  const minAllowed = prevReading ? prevReading.index : data.initialIndex;
+  const minAllowed = prevReading ? prevReading.index : facility.initialIndex;
   const maxAllowed = nextReading ? nextReading.index : Infinity;
   
   if (index < minAllowed) return { valid: false, msg: `Endeks, önceki tarihli kayıttan (${minAllowed}) küçük olamaz!` };
@@ -173,31 +165,28 @@ function validateReading(facility, type, date, index, excludeId = null) {
 // ===== Render =====
 
 function render() {
-  facilityCount.textContent = facilities.length;
+  const activeList = facilities[activeTab];
+  facilityCount.textContent = activeList.length;
   activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
 
-  if (facilities.length === 0) {
+  if (activeList.length === 0) {
     emptyState.style.display = 'flex';
     facilitiesList.innerHTML = '';
     return;
   }
 
   emptyState.style.display = 'none';
-  facilitiesList.innerHTML = facilities.map(f => renderFacilityAccordion(f)).join('');
+  facilitiesList.innerHTML = activeList.map(f => renderFacilityAccordion(f)).join('');
   attachEvents();
 }
 
 function renderFacilityAccordion(f) {
   const isOpen = openAccordionId === f.id;
-  const currentData = f[activeTab];
-  const sortedReadings = [...currentData.readings].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedReadings = [...f.readings].sort((a, b) => new Date(b.date) - new Date(a.date));
   const lastReading = sortedReadings[0];
-  const currentIndex = lastReading ? lastReading.index : currentData.initialIndex;
+  const currentIndex = lastReading ? lastReading.index : f.initialIndex;
   const lastConsumption = lastReading ? lastReading.consumption : 0;
-  const totalConsumption = currentIndex - currentData.initialIndex;
-
-  const elecIndex = getLatestIndex(f, 'elektrik');
-  const waterIndex = getLatestIndex(f, 'su');
+  const totalConsumption = currentIndex - f.initialIndex;
 
   return `
     <div class="facility-card ${isOpen ? 'open' : ''}" data-id="${f.id}">
@@ -207,12 +196,12 @@ function renderFacilityAccordion(f) {
           <span class="facility-name">${escapeHtml(f.name)}</span>
           <div class="facility-index-summary">
             <div class="summary-item">
-              <span class="summary-label">Elek. Endeks</span>
-              <span class="summary-value ${activeTab === 'elektrik' ? 'highlight' : ''}">${elecIndex.toLocaleString('tr-TR')}</span>
+              <span class="summary-label">Güncel Endeks</span>
+              <span class="summary-value highlight">${currentIndex.toLocaleString('tr-TR')}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Su Endeks</span>
-              <span class="summary-value ${activeTab === 'su' ? 'highlight' : ''}">${waterIndex.toLocaleString('tr-TR')}</span>
+              <span class="summary-label">Toplam Tük.</span>
+              <span class="summary-value">${totalConsumption.toLocaleString('tr-TR')}</span>
             </div>
           </div>
         </div>
@@ -223,7 +212,7 @@ function renderFacilityAccordion(f) {
       <div class="accordion-content">
         <div class="subscriber-stats">
           <div class="stat-box">
-            <div class="stat-label">GÜNCEL ${activeTab.toUpperCase()} ENDEKS</div>
+            <div class="stat-label">GÜNCEL ENDEKS</div>
             <div class="stat-value">${currentIndex.toLocaleString('tr-TR')}</div>
           </div>
           <div class="stat-box">
@@ -316,6 +305,7 @@ tabBtns.forEach(btn => {
     tabBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeTab = btn.dataset.tab;
+    openAccordionId = null; // Close current open when switching tab
     render();
   });
 });
@@ -330,35 +320,35 @@ addForm.addEventListener('submit', async (e) => {
     id: generateId(),
     name,
     createdAt: new Date().toISOString(),
-    elektrik: { initialIndex: initial, readings: [] },
-    su: { initialIndex: initial, readings: [] }
+    initialIndex: initial,
+    readings: []
   };
-  facilities.push(newFacility);
+  facilities[activeTab].push(newFacility);
   await saveData();
   render();
   nameInput.value = '';
   initialIndexInput.value = '';
   nameInput.focus();
-  showToast(`Tesis eklendi: ${name}`);
+  showToast(`Tesis eklendi (${activeTab === 'elektrik' ? 'Elektrik' : 'Su'}): ${name}`);
 });
 
 function openIndexModal(fid, rid = null) {
   currentFacilityId = fid;
   editingReadingId = rid;
-  const f = facilities.find(fac => fac.id === fid);
-  const data = f[activeTab];
+  const activeList = facilities[activeTab];
+  const f = activeList.find(fac => fac.id === fid);
   
   if (rid) {
-    const r = data.readings.find(x => x.id === rid);
+    const r = f.readings.find(x => x.id === rid);
     modalTitle.textContent = `${f.name} — Kayıt Düzenle`;
     newIndexInput.value = r.index;
     readingDateInput.value = r.date.split('T')[0];
-    const others = data.readings.filter(x => x.id !== rid).sort((a,b) => new Date(a.date) - new Date(b.date));
-    let prev = data.initialIndex;
+    const others = f.readings.filter(x => x.id !== rid).sort((a,b) => new Date(a.date) - new Date(b.date));
+    let prev = f.initialIndex;
     for(let x of others) { if (new Date(x.date) < new Date(r.date)) prev = x.index; }
     modalPrevIndex.textContent = prev.toLocaleString('tr-TR');
   } else {
-    const lastIdx = getLatestIndex(f, activeTab);
+    const lastIdx = getLatestIndex(f);
     modalTitle.textContent = `${f.name} — ${activeTab.toUpperCase()} Endeksi`;
     modalPrevIndex.textContent = lastIdx.toLocaleString('tr-TR');
     newIndexInput.value = '';
@@ -382,14 +372,14 @@ newIndexInput.addEventListener('input', updateConsumptionPreview);
 readingDateInput.addEventListener('input', updateConsumptionPreview);
 
 function updateConsumptionPreview() {
-  const f = facilities.find(fac => fac.id === currentFacilityId);
+  const activeList = facilities[activeTab];
+  const f = activeList.find(fac => fac.id === currentFacilityId);
   if (!f) return;
-  const data = f[activeTab];
   const val = parseInt(newIndexInput.value, 10);
   const date = readingDateInput.value;
   if (!isNaN(val) && date) {
-    const others = data.readings.filter(x => x.id !== editingReadingId).sort((a,b) => new Date(a.date) - new Date(b.date));
-    let prev = data.initialIndex;
+    const others = f.readings.filter(x => x.id !== editingReadingId).sort((a,b) => new Date(a.date) - new Date(b.date));
+    let prev = f.initialIndex;
     for(let x of others) { if (new Date(x.date) < new Date(date)) prev = x.index; }
     consumptionPreview.style.display = 'block';
     previewValue.textContent = (val - prev).toLocaleString('tr-TR');
@@ -398,21 +388,21 @@ function updateConsumptionPreview() {
 
 indexForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const f = facilities.find(fac => fac.id === currentFacilityId);
-  const data = f[activeTab];
+  const activeList = facilities[activeTab];
+  const f = activeList.find(fac => fac.id === currentFacilityId);
   const val = parseInt(newIndexInput.value, 10);
   const date = readingDateInput.value;
   if (isNaN(val) || !date) { showToast('Hatalı giriş!'); return; }
-  const check = validateReading(f, activeTab, date, val, editingReadingId);
+  const check = validateReading(f, date, val, editingReadingId);
   if (!check.valid) { showToast(check.msg); return; }
   if (editingReadingId) {
-    const r = data.readings.find(x => x.id === editingReadingId);
+    const r = f.readings.find(x => x.id === editingReadingId);
     r.index = val;
     r.date = new Date(date).toISOString();
   } else {
-    data.readings.push({ id: generateId(), date: new Date(date).toISOString(), index: val, consumption: 0 });
+    f.readings.push({ id: generateId(), date: new Date(date).toISOString(), index: val, consumption: 0 });
   }
-  recalculateConsumptions(f, activeTab);
+  recalculateConsumptions(f);
   await saveData();
   render();
   closeIndexModal();
@@ -420,10 +410,10 @@ indexForm.addEventListener('submit', async (e) => {
 });
 
 async function deleteReading(fid, rid) {
-  const f = facilities.find(fac => fac.id === fid);
-  const data = f[activeTab];
-  data.readings = data.readings.filter(r => r.id !== rid);
-  recalculateConsumptions(f, activeTab);
+  const activeList = facilities[activeTab];
+  const f = activeList.find(fac => fac.id === fid);
+  f.readings = f.readings.filter(r => r.id !== rid);
+  recalculateConsumptions(f);
   await saveData();
   render();
   showToast('Kayıt silindi');
@@ -431,7 +421,8 @@ async function deleteReading(fid, rid) {
 
 function openDeleteModal(id) {
   deleteFacilityId = id;
-  const f = facilities.find(fac => fac.id === id);
+  const activeList = facilities[activeTab];
+  const f = activeList.find(fac => fac.id === id);
   deleteName.textContent = f.name;
   deleteModalOverlay.classList.add('active');
 }
@@ -442,7 +433,7 @@ function closeDeleteModal() {
 }
 
 btnConfirmDelete.addEventListener('click', async () => {
-  facilities = facilities.filter(f => f.id !== deleteFacilityId);
+  facilities[activeTab] = facilities[activeTab].filter(f => f.id !== deleteFacilityId);
   await saveData();
   render();
   closeDeleteModal();
