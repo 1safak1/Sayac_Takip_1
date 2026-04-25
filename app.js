@@ -1,24 +1,74 @@
-// ===== Data Store =====
-const STORAGE_KEY = 'tesis_takip_data';
+// ===== IndexedDB Wrapper =====
+const DB_NAME = 'TesisTakipDB';
+const STORE_NAME = 'facilities';
+const DB_VERSION = 1;
 
-function loadData() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    const data = JSON.parse(raw);
-    if (data.length > 0 && !data[0].hasOwnProperty('electricity')) {
-      return []; 
-    }
-    return data;
-  } catch { return []; }
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+
+    request.onsuccess = (event) => resolve(event.target.result);
+    request.onerror = (event) => reject(event.target.error);
+  });
 }
 
-function saveData(facilities) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(facilities));
+async function getStoredData() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get('data');
+
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
 }
 
-let facilities = loadData();
+async function setStoredData(data) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(data, 'data');
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ===== Data Management =====
+let facilities = [];
 let activeTab = 'elektrik'; 
+
+async function initApp() {
+  // Try to migrate from localStorage first
+  const localData = localStorage.getItem('tesis_takip_data');
+  if (localData) {
+    try {
+      facilities = JSON.parse(localData);
+      await setStoredData(facilities); // Move to IndexedDB
+      localStorage.removeItem('tesis_takip_data'); // Clean up
+      console.log('Migrated from localStorage to IndexedDB');
+    } catch (e) {
+      console.error('Migration failed', e);
+    }
+  } else {
+    facilities = await getStoredData();
+  }
+  
+  render();
+}
+
+async function saveData() {
+  await setStoredData(facilities);
+}
 
 // ===== DOM References =====
 const addForm = document.getElementById('add-facility-form');
@@ -56,7 +106,7 @@ const toastMessage = document.getElementById('toast-message');
 
 // State
 let currentFacilityId = null;
-let editingReadingId = null; // null if adding new
+let editingReadingId = null; 
 let deleteFacilityId = null;
 let openAccordionId = null;
 
@@ -82,15 +132,10 @@ function showToast(message) {
 function getLatestIndex(facility, type) {
   const readings = facility[type].readings;
   if (readings.length === 0) return facility[type].initialIndex;
-  // Sort them by date to be sure
   const sorted = [...readings].sort((a, b) => new Date(a.date) - new Date(b.date));
   return sorted[sorted.length - 1].index;
 }
 
-/**
- * Recalculates consumption for all readings of a specific type in a facility
- * based on date sorting.
- */
 function recalculateConsumptions(facility, type) {
   const data = facility[type];
   data.readings.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -102,29 +147,19 @@ function recalculateConsumptions(facility, type) {
   });
 }
 
-/**
- * Validates a new or edited index value based on its date position.
- */
 function validateReading(facility, type, date, index, excludeId = null) {
   const data = facility[type];
   const targetDate = new Date(date);
-  
-  // Get all other readings sorted
   const otherReadings = data.readings
     .filter(r => r.id !== excludeId)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   
-  // Find immediate previous and next readings
   let prevReading = null;
   let nextReading = null;
-  
   for (let r of otherReadings) {
     const rDate = new Date(r.date);
-    if (rDate < targetDate) {
-      prevReading = r;
-    } else if (rDate > targetDate && !nextReading) {
-      nextReading = r;
-    }
+    if (rDate < targetDate) prevReading = r;
+    else if (rDate > targetDate && !nextReading) nextReading = r;
   }
   
   const minAllowed = prevReading ? prevReading.index : data.initialIndex;
@@ -132,7 +167,6 @@ function validateReading(facility, type, date, index, excludeId = null) {
   
   if (index < minAllowed) return { valid: false, msg: `Endeks, önceki tarihli kayıttan (${minAllowed}) küçük olamaz!` };
   if (index > maxAllowed) return { valid: false, msg: `Endeks, sonraki tarihli kayıttan (${maxAllowed}) büyük olamaz!` };
-  
   return { valid: true };
 }
 
@@ -156,10 +190,7 @@ function render() {
 function renderFacilityAccordion(f) {
   const isOpen = openAccordionId === f.id;
   const currentData = f[activeTab];
-  
-  // Sort readings for display (newest first)
   const sortedReadings = [...currentData.readings].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
   const lastReading = sortedReadings[0];
   const currentIndex = lastReading ? lastReading.index : currentData.initialIndex;
   const lastConsumption = lastReading ? lastReading.consumption : 0;
@@ -174,7 +205,6 @@ function renderFacilityAccordion(f) {
         <div class="facility-info-summary">
           <div class="subscriber-avatar">${f.name[0].toUpperCase()}</div>
           <span class="facility-name">${escapeHtml(f.name)}</span>
-          
           <div class="facility-index-summary">
             <div class="summary-item">
               <span class="summary-label">Elek. Endeks</span>
@@ -190,7 +220,6 @@ function renderFacilityAccordion(f) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </button>
-
       <div class="accordion-content">
         <div class="subscriber-stats">
           <div class="stat-box">
@@ -206,16 +235,13 @@ function renderFacilityAccordion(f) {
             <div class="stat-value success">${totalConsumption.toLocaleString('tr-TR')}</div>
           </div>
         </div>
-
         <button class="btn-enter-index" data-id="${f.id}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Yeni ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Endeksi Gir
         </button>
-
         ${renderHistory(sortedReadings, f.id)}
-
         <div class="facility-actions-row">
           <button class="btn-icon danger btn-delete" data-id="${f.id}" title="Tesisi Sil">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -230,7 +256,6 @@ function renderFacilityAccordion(f) {
 
 function renderHistory(readings, facilityId) {
   if (readings.length === 0) return '';
-
   const rows = readings.map(r => `
     <tr>
       <td>${formatDate(r.date)}</td>
@@ -246,14 +271,11 @@ function renderHistory(readings, facilityId) {
       </td>
     </tr>
   `).join('');
-
   return `
     <div class="history-section">
       <div class="history-table-wrapper visible">
         <table class="history-table">
-          <thead>
-            <tr><th>Tarih</th><th>Endeks</th><th>Tüketim</th><th style="text-align: right;">İşlem</th></tr>
-          </thead>
+          <thead><tr><th>Tarih</th><th>Endeks</th><th>Tüketim</th><th style="text-align: right;">İşlem</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -271,31 +293,16 @@ function escapeHtml(str) {
 
 function attachEvents() {
   document.querySelectorAll('.btn-enter-index').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openIndexModal(btn.dataset.id);
-    });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openIndexModal(btn.dataset.id); });
   });
-
   document.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openDeleteModal(btn.dataset.id);
-    });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openDeleteModal(btn.dataset.id); });
   });
-
   document.querySelectorAll('.btn-edit-reading').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openIndexModal(btn.dataset.fid, btn.dataset.rid);
-    });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openIndexModal(btn.dataset.fid, btn.dataset.rid); });
   });
-
   document.querySelectorAll('.btn-delete-reading').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteReading(btn.dataset.fid, btn.dataset.rid);
-    });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); deleteReading(btn.dataset.fid, btn.dataset.rid); });
   });
 }
 
@@ -304,7 +311,6 @@ function toggleAccordion(id) {
   render();
 }
 
-// Tab Switching
 tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     tabBtns.forEach(b => b.classList.remove('active'));
@@ -314,12 +320,10 @@ tabBtns.forEach(btn => {
   });
 });
 
-// Add Facility
-addForm.addEventListener('submit', (e) => {
+addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
   const initial = parseInt(initialIndexInput.value, 10) || 0;
-
   if (!name) return;
 
   const newFacility = {
@@ -329,22 +333,18 @@ addForm.addEventListener('submit', (e) => {
     elektrik: { initialIndex: initial, readings: [] },
     su: { initialIndex: initial, readings: [] }
   };
-
   facilities.push(newFacility);
-  saveData(facilities);
+  await saveData();
   render();
-
   nameInput.value = '';
   initialIndexInput.value = '';
   nameInput.focus();
   showToast(`Tesis eklendi: ${name}`);
 });
 
-// Index Modal Logic
 function openIndexModal(fid, rid = null) {
   currentFacilityId = fid;
   editingReadingId = rid;
-  
   const f = facilities.find(fac => fac.id === fid);
   const data = f[activeTab];
   
@@ -353,13 +353,9 @@ function openIndexModal(fid, rid = null) {
     modalTitle.textContent = `${f.name} — Kayıt Düzenle`;
     newIndexInput.value = r.index;
     readingDateInput.value = r.date.split('T')[0];
-    
-    // Find previous index relative to this date for UI
     const others = data.readings.filter(x => x.id !== rid).sort((a,b) => new Date(a.date) - new Date(b.date));
     let prev = data.initialIndex;
-    for(let x of others) {
-      if (new Date(x.date) < new Date(r.date)) prev = x.index;
-    }
+    for(let x of others) { if (new Date(x.date) < new Date(r.date)) prev = x.index; }
     modalPrevIndex.textContent = prev.toLocaleString('tr-TR');
   } else {
     const lastIdx = getLatestIndex(f, activeTab);
@@ -368,7 +364,6 @@ function openIndexModal(fid, rid = null) {
     newIndexInput.value = '';
     readingDateInput.value = new Date().toISOString().split('T')[0];
   }
-  
   consumptionPreview.style.display = 'none';
   modalOverlay.classList.add('active');
   setTimeout(() => newIndexInput.focus(), 100);
@@ -392,71 +387,48 @@ function updateConsumptionPreview() {
   const data = f[activeTab];
   const val = parseInt(newIndexInput.value, 10);
   const date = readingDateInput.value;
-
   if (!isNaN(val) && date) {
     const others = data.readings.filter(x => x.id !== editingReadingId).sort((a,b) => new Date(a.date) - new Date(b.date));
     let prev = data.initialIndex;
-    for(let x of others) {
-      if (new Date(x.date) < new Date(date)) prev = x.index;
-    }
+    for(let x of others) { if (new Date(x.date) < new Date(date)) prev = x.index; }
     consumptionPreview.style.display = 'block';
     previewValue.textContent = (val - prev).toLocaleString('tr-TR');
-  } else {
-    consumptionPreview.style.display = 'none';
-  }
+  } else { consumptionPreview.style.display = 'none'; }
 }
 
-indexForm.addEventListener('submit', (e) => {
+indexForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = facilities.find(fac => fac.id === currentFacilityId);
   const data = f[activeTab];
   const val = parseInt(newIndexInput.value, 10);
   const date = readingDateInput.value;
-
-  if (isNaN(val) || !date) {
-    showToast('Hatalı giriş!');
-    return;
-  }
-
-  // VALIDATION
+  if (isNaN(val) || !date) { showToast('Hatalı giriş!'); return; }
   const check = validateReading(f, activeTab, date, val, editingReadingId);
-  if (!check.valid) {
-    showToast(check.msg);
-    return;
-  }
-
+  if (!check.valid) { showToast(check.msg); return; }
   if (editingReadingId) {
     const r = data.readings.find(x => x.id === editingReadingId);
     r.index = val;
     r.date = new Date(date).toISOString();
   } else {
-    data.readings.push({
-      id: generateId(),
-      date: new Date(date).toISOString(),
-      index: val,
-      consumption: 0 // Will be recalculated
-    });
+    data.readings.push({ id: generateId(), date: new Date(date).toISOString(), index: val, consumption: 0 });
   }
-
   recalculateConsumptions(f, activeTab);
-  saveData(facilities);
+  await saveData();
   render();
   closeIndexModal();
   showToast(editingReadingId ? 'Kayıt güncellendi' : 'Endeks kaydedildi');
 });
 
-function deleteReading(fid, rid) {
+async function deleteReading(fid, rid) {
   const f = facilities.find(fac => fac.id === fid);
   const data = f[activeTab];
   data.readings = data.readings.filter(r => r.id !== rid);
-  
   recalculateConsumptions(f, activeTab);
-  saveData(facilities);
+  await saveData();
   render();
   showToast('Kayıt silindi');
 }
 
-// Facility Delete Logic
 function openDeleteModal(id) {
   deleteFacilityId = id;
   const f = facilities.find(fac => fac.id === id);
@@ -469,9 +441,9 @@ function closeDeleteModal() {
   deleteFacilityId = null;
 }
 
-btnConfirmDelete.addEventListener('click', () => {
+btnConfirmDelete.addEventListener('click', async () => {
   facilities = facilities.filter(f => f.id !== deleteFacilityId);
-  saveData(facilities);
+  await saveData();
   render();
   closeDeleteModal();
   showToast('Tesis silindi');
@@ -482,4 +454,4 @@ btnCloseDeleteModal.addEventListener('click', closeDeleteModal);
 
 // Init
 window.toggleAccordion = toggleAccordion;
-render();
+initApp();
