@@ -58,6 +58,9 @@ async function initApp() {
     facilities = stored;
   }
   
+  // Set initial theme
+  document.body.classList.add('theme-red');
+  
   render();
 }
 
@@ -305,7 +308,13 @@ tabBtns.forEach(btn => {
     tabBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeTab = btn.dataset.tab;
-    openAccordionId = null; // Close current open when switching tab
+    
+    // Apply Theme
+    document.body.classList.remove('theme-red', 'theme-blue');
+    if (activeTab === 'elektrik') document.body.classList.add('theme-red');
+    else if (activeTab === 'su') document.body.classList.add('theme-blue');
+
+    openAccordionId = null; 
     render();
   });
 });

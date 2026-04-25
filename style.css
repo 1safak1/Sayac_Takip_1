@@ -40,6 +40,26 @@
   --transition-fast: 0.15s ease;
 }
 
+/* Theme Overrides */
+.theme-red {
+  --accent: #ff4757;
+  --accent-hover: #ff6b81;
+  --accent-glow: rgba(255, 71, 87, 0.25);
+  --accent-soft: rgba(255, 71, 87, 0.12);
+}
+
+.theme-blue {
+  --accent: #2e86de;
+  --accent-hover: #54a0ff;
+  --accent-glow: rgba(46, 134, 222, 0.25);
+  --accent-soft: rgba(46, 134, 222, 0.12);
+}
+
+/* Transition for theme change */
+body, .logo-icon, .tab-btn, .btn-primary, .stat-value, .facility-card {
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
 /* ===== Reset & Base ===== */
 *, *::before, *::after {
   box-sizing: border-box;
