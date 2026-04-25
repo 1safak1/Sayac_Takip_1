@@ -26,6 +26,7 @@ const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const modalPrevIndex = document.getElementById('modal-prev-index');
 const newIndexInput = document.getElementById('new-index');
+const readingDateInput = document.getElementById('reading-date');
 const indexForm = document.getElementById('index-form');
 const consumptionPreview = document.getElementById('consumption-preview');
 const previewValue = document.getElementById('preview-value');
@@ -243,6 +244,11 @@ function openIndexModal(subId) {
   modalTitle.textContent = `${sub.name} — Endeks Girişi`;
   modalPrevIndex.textContent = prevIndex.toLocaleString('tr-TR');
   newIndexInput.value = '';
+  
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  readingDateInput.value = today;
+
   consumptionPreview.style.display = 'none';
 
   modalOverlay.classList.add('active');
@@ -294,9 +300,10 @@ indexForm.addEventListener('submit', (e) => {
   }
 
   const consumption = newIndex - prevIndex;
+  const selectedDate = readingDateInput.value;
 
   sub.readings.push({
-    date: new Date().toISOString(),
+    date: selectedDate ? new Date(selectedDate).toISOString() : new Date().toISOString(),
     index: newIndex,
     consumption
   });
