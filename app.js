@@ -217,27 +217,33 @@ function renderFacilityAccordion(f) {
 
   return `
     <div class="facility-card ${isOpen ? 'open' : ''}" data-id="${f.id}">
-      <button class="accordion-header" onclick="toggleAccordion('${f.id}')">
+      <div class="accordion-header" onclick="toggleAccordion('${f.id}')">
         <div class="facility-info-summary">
           <div class="subscriber-avatar">${f.name[0].toUpperCase()}</div>
-          <span class="facility-name">${escapeHtml(f.name)}</span>
-          <div class="facility-index-summary">
-            <div class="summary-item"><span class="summary-label">Güncel Endeks</span><span class="summary-value highlight">${currentIndex.toLocaleString('tr-TR')}</span></div>
-            <div class="summary-item"><span class="summary-label">Toplam Tük.</span><span class="summary-value">${totalConsumption.toLocaleString('tr-TR')}</span></div>
+          <div class="facility-text-info">
+            <span class="facility-name">${escapeHtml(f.name)}</span>
+            <div class="facility-index-summary">
+              <div class="summary-item"><span class="summary-label">Güncel Endeks</span><span class="summary-value highlight">${currentIndex.toLocaleString('tr-TR')}</span></div>
+              <div class="summary-item"><span class="summary-label">Toplam Tük.</span><span class="summary-value">${totalConsumption.toLocaleString('tr-TR')}</span></div>
+            </div>
           </div>
         </div>
-        <div class="chevron-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-      </button>
+        <div class="header-actions">
+          <button class="btn-enter-index" data-id="${f.id}" title="Yeni Endeks Gir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Endeks Gir</span>
+          </button>
+          <div class="chevron-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+      </div>
       <div class="accordion-content">
         <div class="subscriber-stats">
           <div class="stat-box"><div class="stat-label">GÜNCEL ENDEKS</div><div class="stat-value">${currentIndex.toLocaleString('tr-TR')}</div></div>
           <div class="stat-box"><div class="stat-label">SON TÜKETİM</div><div class="stat-value accent">${lastConsumption.toLocaleString('tr-TR')}</div></div>
           <div class="stat-box"><div class="stat-label">TOPLAM TÜKETİM</div><div class="stat-value success">${totalConsumption.toLocaleString('tr-TR')}</div></div>
         </div>
-        <button class="btn-enter-index" data-id="${f.id}">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Yeni ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Endeksi Gir
-        </button>
         ${renderHistory(sortedReadings, f.id)}
         <div class="facility-actions-row">
           <button class="btn-icon danger btn-delete" data-id="${f.id}" title="Tesisi Sil">
