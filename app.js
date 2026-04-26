@@ -49,7 +49,18 @@ async function initApp() {
   
   // Set initial theme
   document.body.classList.add('theme-red');
+  
+  populateYearSelect();
   render();
+}
+
+function populateYearSelect() {
+  const currentYear = new Date().getFullYear();
+  let options = '';
+  for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+    options += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y} Yılı</option>`;
+  }
+  summaryYearSelect.innerHTML = options;
 }
 
 async function saveData() {
@@ -93,6 +104,7 @@ const managementView = document.getElementById('management-view');
 const summaryView = document.getElementById('summary-view');
 const summaryTable = document.getElementById('summary-table');
 const summaryToggleBtns = document.querySelectorAll('.toggle-btn');
+const summaryYearSelect = document.getElementById('summary-year-select');
 
 // State
 let currentFacilityId = null;
@@ -100,6 +112,7 @@ let editingReadingId = null;
 let deleteFacilityId = null;
 let openAccordionId = null;
 let summaryDataType = 'consumption'; // 'consumption' or 'index'
+let selectedSummaryYear = new Date().getFullYear();
 
 // ===== Utility Functions =====
 
@@ -243,25 +256,21 @@ function renderHistory(readings, facilityId) {
 }
 
 function renderSummary() {
-  const last12Months = [];
-  const now = new Date();
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    last12Months.push({
-      label: d.toLocaleString('tr-TR', { month: 'short', year: 'numeric' }),
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    });
-  }
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  const monthsData = months.map((m, i) => ({
+    label: m,
+    key: `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`
+  }));
 
   const activeList = facilities[activeTab];
-  let html = `<thead><tr><th>Tesis Adı</th>${last12Months.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
+  let html = `<thead><tr><th>Tesis Adı</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
 
   if (activeList.length === 0) {
-    html += `<tr><td colspan="${last12Months.length + 1}" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
+    html += `<tr><td colspan="${monthsData.length + 1}" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
   } else {
     activeList.forEach(f => {
       html += `<tr><td>${escapeHtml(f.name)}</td>`;
-      last12Months.forEach(m => {
+      monthsData.forEach(m => {
         const reading = f.readings.find(r => r.date.startsWith(m.key));
         if (reading) {
           const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
@@ -344,6 +353,11 @@ summaryToggleBtns.forEach(btn => {
     summaryDataType = btn.dataset.type;
     renderSummary();
   });
+});
+
+summaryYearSelect.addEventListener('change', () => {
+  selectedSummaryYear = parseInt(summaryYearSelect.value, 10);
+  renderSummary();
 });
 
 addForm.addEventListener('submit', async (e) => {

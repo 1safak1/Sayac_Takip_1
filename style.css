@@ -563,6 +563,32 @@ input[type="number"]::-webkit-outer-spin-button {
 .summary-header {
   flex-wrap: wrap;
   gap: 16px;
+  justify-content: space-between;
+}
+
+.summary-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.year-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.year-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .toggle-container {
