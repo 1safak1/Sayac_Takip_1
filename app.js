@@ -461,6 +461,89 @@ btnConfirmDelete.addEventListener('click', async () => {
 btnCancelDelete.addEventListener('click', closeDeleteModal);
 btnCloseDeleteModal.addEventListener('click', closeDeleteModal);
 
+// ===== View Management =====
+const navBtns = document.querySelectorAll('.nav-btn');
+const managementView = document.getElementById('management-view');
+const summaryView = document.getElementById('summary-view');
+const summaryTable = document.getElementById('summary-table');
+const summaryToggleBtns = document.querySelectorAll('.toggle-btn');
+
+let currentView = 'management';
+let summaryDataType = 'consumption'; // 'consumption' or 'index'
+
+navBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    navBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    
+    if (currentView === 'management') {
+      managementView.style.display = 'block';
+      summaryView.style.display = 'none';
+      render(); 
+    } else {
+      managementView.style.display = 'none';
+      summaryView.style.display = 'block';
+      renderSummary();
+    }
+  });
+});
+
+summaryToggleBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    summaryToggleBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    summaryDataType = btn.dataset.type;
+    renderSummary();
+  });
+});
+
+function renderSummary() {
+  const last12Months = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    last12Months.push({
+      label: d.toLocaleString('tr-TR', { month: 'short', year: 'numeric' }),
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    });
+  }
+
+  const facilitiesElek = facilities.elektrik;
+  
+  let html = `
+    <thead>
+      <tr>
+        <th>Tesis Adı</th>
+        ${last12Months.map(m => `<th>${m.label}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  if (facilitiesElek.length === 0) {
+    html += `<tr><td colspan="${last12Months.length + 1}" style="text-align:center; padding: 40px;">Henüz elektrik tesisi eklenmedi</td></tr>`;
+  } else {
+    facilitiesElek.forEach(f => {
+      html += `<tr><td>${escapeHtml(f.name)}</td>`;
+      last12Months.forEach(m => {
+        const reading = f.readings.find(r => r.date.startsWith(m.key));
+        if (reading) {
+          const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
+          const cssClass = summaryDataType === 'consumption' ? 'val-consumption' : 'val-index';
+          html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}</td>`;
+        } else {
+          html += `<td class="empty-cell">—</td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+  }
+
+  html += `</tbody>`;
+  summaryTable.innerHTML = html;
+}
+
 // Init
 window.toggleAccordion = toggleAccordion;
 initApp();
