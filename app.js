@@ -117,8 +117,8 @@ function generateId() {
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  return `${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function showToast(message) {
@@ -145,6 +145,14 @@ function recalculateConsumptions(facility) {
 
 function validateReading(facility, date, index, excludeId = null) {
   const targetDate = new Date(date);
+  const targetMonthStr = date; // "YYYY-MM" format from month input
+  
+  // Ayda 1 defa kontrolü
+  const monthExists = facility.readings.some(r => r.date.startsWith(targetMonthStr) && r.id !== excludeId);
+  if (monthExists) {
+    return { valid: false, msg: `Bu dönem (${formatDate(date)}) için zaten bir kayıt mevcut!` };
+  }
+
   const otherReadings = facility.readings
     .filter(r => r.id !== excludeId)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -160,8 +168,8 @@ function validateReading(facility, date, index, excludeId = null) {
   const minAllowed = prevReading ? prevReading.index : facility.initialIndex;
   const maxAllowed = nextReading ? nextReading.index : Infinity;
   
-  if (index < minAllowed) return { valid: false, msg: `Endeks, önceki tarihli kayıttan (${minAllowed}) küçük olamaz!` };
-  if (index > maxAllowed) return { valid: false, msg: `Endeks, sonraki tarihli kayıttan (${maxAllowed}) büyük olamaz!` };
+  if (index < minAllowed) return { valid: false, msg: `Endeks, önceki dönemden (${minAllowed}) küçük olamaz!` };
+  if (index > maxAllowed) return { valid: false, msg: `Endeks, sonraki dönemden (${maxAllowed}) büyük olamaz!` };
   return { valid: true };
 }
 
@@ -351,7 +359,7 @@ function openIndexModal(fid, rid = null) {
     const r = f.readings.find(x => x.id === rid);
     modalTitle.textContent = `${f.name} — Kayıt Düzenle`;
     newIndexInput.value = r.index;
-    readingDateInput.value = r.date.split('T')[0];
+    readingDateInput.value = r.date.substring(0, 7); // YYYY-MM
     const others = f.readings.filter(x => x.id !== rid).sort((a,b) => new Date(a.date) - new Date(b.date));
     let prev = f.initialIndex;
     for(let x of others) { if (new Date(x.date) < new Date(r.date)) prev = x.index; }
@@ -361,7 +369,8 @@ function openIndexModal(fid, rid = null) {
     modalTitle.textContent = `${f.name} — ${activeTab.toUpperCase()} Endeksi`;
     modalPrevIndex.textContent = lastIdx.toLocaleString('tr-TR');
     newIndexInput.value = '';
-    readingDateInput.value = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    readingDateInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
   consumptionPreview.style.display = 'none';
   modalOverlay.classList.add('active');
