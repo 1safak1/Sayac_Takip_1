@@ -55,16 +55,31 @@ async function initApp() {
 }
 
 function populateYearSelect() {
-  const currentYear = new Date().getFullYear();
+  const years = new Set();
+  years.add(new Date().getFullYear()); // Always include current year
+  
+  // Get all years from all readings in both tabs
+  ['elektrik', 'su'].forEach(tab => {
+    facilities[tab].forEach(f => {
+      f.readings.forEach(r => {
+        const y = new Date(r.date).getFullYear();
+        years.add(y);
+      });
+    });
+  });
+
+  const sortedYears = Array.from(years).sort((a, b) => b - a); // Newest first
+  
   let options = '';
-  for (let y = currentYear - 2; y <= currentYear + 2; y++) {
-    options += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y} Yılı</option>`;
-  }
+  sortedYears.forEach(y => {
+    options += `<option value="${y}" ${y === selectedSummaryYear ? 'selected' : ''}>${y} Yılı</option>`;
+  });
   summaryYearSelect.innerHTML = options;
 }
 
 async function saveData() {
   await setStoredData(facilities);
+  populateYearSelect();
 }
 
 // ===== DOM References =====
