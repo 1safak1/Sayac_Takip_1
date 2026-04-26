@@ -56,19 +56,23 @@ async function initApp() {
 
 function populateYearSelect() {
   const years = new Set();
-  years.add(new Date().getFullYear()); // Always include current year
+  const currentYear = new Date().getFullYear();
+  years.add(currentYear); 
   
-  // Get all years from all readings in both tabs
-  ['elektrik', 'su'].forEach(tab => {
-    facilities[tab].forEach(f => {
-      f.readings.forEach(r => {
-        const y = new Date(r.date).getFullYear();
-        years.add(y);
-      });
+  // Sadece aktif sekmeye (Elektrik veya Su) ait yılları getir
+  facilities[activeTab].forEach(f => {
+    f.readings.forEach(r => {
+      const y = new Date(r.date).getFullYear();
+      years.add(y);
     });
   });
 
-  const sortedYears = Array.from(years).sort((a, b) => b - a); // Newest first
+  const sortedYears = Array.from(years).sort((a, b) => b - a);
+  
+  // Eğer seçili yıl mevcut listede yoksa, en güncel yılı seç
+  if (!years.has(selectedSummaryYear)) {
+    selectedSummaryYear = sortedYears[0];
+  }
   
   let options = '';
   sortedYears.forEach(y => {
@@ -355,6 +359,7 @@ navBtns.forEach(btn => {
       summaryView.style.display = 'block';
       const summaryTitle = document.getElementById('summary-title');
       summaryTitle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Tüketim Özeti`;
+      populateYearSelect();
       renderSummary();
     }
     openAccordionId = null;
