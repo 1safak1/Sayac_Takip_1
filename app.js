@@ -105,6 +105,7 @@ const indexForm = document.getElementById('index-form');
 const consumptionPreview = document.getElementById('consumption-preview');
 const previewValue = document.getElementById('preview-value');
 const btnCloseModal = document.getElementById('btn-close-modal');
+const readingNoteInput = document.getElementById('reading-note');
 
 // Modal - delete
 const deleteModalOverlay = document.getElementById('delete-modal-overlay');
@@ -262,6 +263,7 @@ function renderHistory(readings, facilityId) {
       <td>${formatDate(r.date)}</td>
       <td>${r.index.toLocaleString('tr-TR')}</td>
       <td><span class="consumption-badge">${r.consumption.toLocaleString('tr-TR')}</span></td>
+      <td class="note-cell">${escapeHtml(r.note || '')}</td>
       <td style="text-align: right;">
         <button class="btn-icon btn-edit-reading" data-fid="${facilityId}" data-rid="${r.id}" title="Düzenle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="btn-icon danger btn-delete-reading" data-fid="${facilityId}" data-rid="${r.id}" title="Sil"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
@@ -272,7 +274,7 @@ function renderHistory(readings, facilityId) {
     <div class="history-section">
       <div class="history-table-wrapper visible">
         <table class="history-table">
-          <thead><tr><th>Tarih</th><th>Endeks</th><th>Tüketim</th><th style="text-align: right;">İşlem</th></tr></thead>
+          <thead><tr><th>Tarih</th><th>Endeks</th><th>Tüketim</th><th>Not</th><th style="text-align: right;">İşlem</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -300,7 +302,8 @@ function renderSummary() {
         if (reading) {
           const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
           const cssClass = summaryDataType === 'consumption' ? 'val-consumption' : 'val-index';
-          html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}</td>`;
+          const noteMarker = reading.note ? `<span class="note-indicator" title="${escapeHtml(reading.note)}">*</span>` : '';
+          html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}${noteMarker}</td>`;
         } else { html += `<td class="empty-cell">—</td>`; }
       });
       html += `</tr>`;
@@ -406,7 +409,9 @@ function openIndexModal(fid, rid = null) {
   if (rid) {
     const r = f.readings.find(x => x.id === rid);
     modalTitle.textContent = `${f.name} — Kayıt Düzenle`;
-    newIndexInput.value = r.index; readingDateInput.value = r.date.substring(0, 7);
+    newIndexInput.value = r.index; 
+    readingDateInput.value = r.date.substring(0, 7);
+    readingNoteInput.value = r.note || '';
     const others = f.readings.filter(x => x.id !== rid).sort((a,b) => new Date(a.date) - new Date(b.date));
     let prev = f.initialIndex;
     for(let x of others) { if (new Date(x.date) < new Date(r.date)) prev = x.index; }
@@ -416,6 +421,7 @@ function openIndexModal(fid, rid = null) {
     modalTitle.textContent = `${f.name} — ${activeTab.toUpperCase()} Endeksi`;
     modalPrevIndex.textContent = lastIdx.toLocaleString('tr-TR');
     newIndexInput.value = '';
+    readingNoteInput.value = '';
     const now = new Date(); readingDateInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
   consumptionPreview.style.display = 'none';
@@ -449,13 +455,15 @@ indexForm.addEventListener('submit', async (e) => {
   const activeList = facilities[activeTab];
   const f = activeList.find(fac => fac.id === currentFacilityId);
   const val = parseInt(newIndexInput.value, 10); const date = readingDateInput.value;
+  const note = readingNoteInput.value.trim();
   if (isNaN(val) || !date) { showToast('Hatalı giriş!'); return; }
   const check = validateReading(f, date, val, editingReadingId);
   if (!check.valid) { showToast(check.msg); return; }
   if (editingReadingId) {
     const r = f.readings.find(x => x.id === editingReadingId);
     r.index = val; r.date = new Date(date).toISOString();
-  } else { f.readings.push({ id: generateId(), date: new Date(date).toISOString(), index: val, consumption: 0 }); }
+    r.note = note;
+  } else { f.readings.push({ id: generateId(), date: new Date(date).toISOString(), index: val, consumption: 0, note: note }); }
   recalculateConsumptions(f); await saveData(); render(); closeIndexModal();
   showToast(editingReadingId ? 'Kayıt güncellendi' : 'Endeks kaydedildi');
 });
