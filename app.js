@@ -539,10 +539,10 @@ async function exportToPDF() {
       t += `</tr>`;
     });
     
-    // Toplam Satırı (Tesis tüketimleri)
+    // Toplam Satırı (Toplam Tüketim)
     t += `</tbody><tfoot>
         <tr style="background:#f1f2f6; font-weight:bold;">
-          <td style="border:1.1px solid #000; padding:6px; font-size:11px; color:#000; vertical-align:middle;">Tesis tüketimleri</td>`;
+          <td style="border:1.1px solid #000; padding:6px; font-size:11px; color:#000; vertical-align:middle;">Toplam Tüketim</td>`;
     monthlyTotals.forEach(total => {
       t += `<td style="border:1.1px solid #000; padding:6px; text-align:center !important; vertical-align:middle; color:#000; font-size:10.5px; font-family:'Arial Narrow',Arial,sans-serif; white-space:nowrap; letter-spacing:-0.3px;">${total.toLocaleString('tr-TR')}</td>`;
     });
