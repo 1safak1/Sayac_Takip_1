@@ -1115,20 +1115,21 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .pdf-export-container {
-  padding: 40px;
+  width: 1000px; /* Fixed width for better scaling in PDF */
+  padding: 30px;
   background: white;
   color: #333;
   font-family: 'Inter', sans-serif;
 }
 
-.pdf-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #1a1a1a; text-align: center; }
-.pdf-subtitle { font-size: 14px; color: #666; margin-bottom: 30px; text-align: center; }
-.pdf-section-title { font-size: 18px; font-weight: bold; margin: 30px 0 15px; padding-bottom: 5px; border-bottom: 2px solid #eee; color: #2c3e50; }
+.pdf-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #1a1a1a; text-align: center; }
+.pdf-subtitle { font-size: 12px; color: #666; margin-bottom: 20px; text-align: center; }
+.pdf-section-title { font-size: 16px; font-weight: bold; margin: 20px 0 10px; padding-bottom: 4px; border-bottom: 2px solid #eee; color: #2c3e50; }
 
-.pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
-.pdf-table th { background: #f8f9fa; border: 1px solid #dee2e6; padding: 8px; font-weight: bold; text-align: center; }
-.pdf-table td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
-.pdf-table td:first-child { text-align: left; font-weight: bold; width: 120px; }
+.pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9px; table-layout: fixed; }
+.pdf-table th { background: #f8f9fa; border: 1px solid #dee2e6; padding: 6px 4px; font-weight: bold; text-align: center; }
+.pdf-table td { border: 1px solid #dee2e6; padding: 6px 4px; text-align: center; word-break: break-word; }
+.pdf-table td:first-child { text-align: left; font-weight: bold; width: 100px; }
 .pdf-val-c { color: #27ae60; font-weight: bold; }
 .pdf-val-i { color: #2980b9; font-weight: bold; }
 

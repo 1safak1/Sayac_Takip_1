@@ -540,10 +540,10 @@ async function exportToPDF() {
   element.innerHTML = html;
 
   const opt = {
-    margin: 10,
+    margin: 5,
     filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    image: { type: 'jpeg', quality: 1.0 },
+    html2canvas: { scale: 3, useCORS: true, logging: false, letterRendering: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   };
 
