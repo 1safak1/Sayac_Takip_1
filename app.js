@@ -495,18 +495,22 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  // Create temporary container
+  showToast('Rapor hazırlanıyor...');
+
   const container = document.createElement('div');
-  container.id = 'pdf-render-container';
+  container.className = 'pdf-export-container';
+  container.style.background = 'white';
+  container.style.color = 'black';
+  container.style.width = '1000px'; 
   container.style.position = 'absolute';
-  container.style.left = '-9999px';
   container.style.top = '0';
-  container.style.width = '1100px';
+  container.style.left = '0';
+  container.style.zIndex = '-9999';
   document.body.appendChild(container);
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
-    if (list.length === 0) return `<div class="pdf-no-data">${cat === 'elektrik' ? 'Elektrik' : 'Su'} kategorisinde tesis kaydı bulunamadı.</div>`;
+    if (list.length === 0) return `<div class="pdf-no-data">${cat.toUpperCase()} kategorisinde tesis kaydı bulunamadı.</div>`;
     
     let html = `<table class="pdf-table"><thead><tr><th>Tesis Adı</th>`;
     monthsShort.forEach(m => html += `<th>${m}</th>`);
@@ -522,7 +526,7 @@ async function exportToPDF() {
           const cls = summaryDataType === 'consumption' ? 'pdf-val-c' : 'pdf-val-i';
           html += `<td class="${cls}">${val.toLocaleString('tr-TR')}</td>`;
         } else {
-          html += `<td>—</td>`;
+          html += `<td style="color:#ccc">—</td>`;
         }
       });
       html += `</tr>`;
@@ -532,44 +536,41 @@ async function exportToPDF() {
   };
 
   container.innerHTML = `
-    <div class="pdf-export-container">
-      <div class="pdf-header">
-        <div class="pdf-title">Tesis Endeks ve Tüketim Takip Raporu</div>
-        <div class="pdf-subtitle">${selectedSummaryYear} Yılı Raporu - ${typeLabel}</div>
-      </div>
-      
-      <div class="pdf-section">
-        <div class="pdf-section-title">1. Elektrik Tüketim Tablosu</div>
-        ${generateTable('elektrik')}
-      </div>
-      
-      <div class="html2pdf__page-break"></div>
-      
-      <div class="pdf-section">
-        <div class="pdf-section-title">2. Su Tüketim Tablosu</div>
-        ${generateTable('su')}
-      </div>
+    <div class="pdf-header" style="text-align:center; padding-bottom:10px; border-bottom:2px solid #000; margin-bottom:20px;">
+      <h1 style="margin:0; font-size:20pt;">Tesis Endeks Takip Raporu</h1>
+      <p style="margin:5px 0; font-size:11pt;">${selectedSummaryYear} Yılı - ${typeLabel}</p>
+    </div>
+    
+    <div class="pdf-section">
+      <h2 style="font-size:14pt; margin:15px 0 10px; border-bottom:1px solid #ddd;">1. Elektrik Tüketim Özeti</h2>
+      ${generateTable('elektrik')}
+    </div>
+    
+    <div class="html2pdf__page-break" style="height: 10px;"></div>
+    
+    <div class="pdf-section">
+      <h2 style="font-size:14pt; margin:25px 0 10px; border-bottom:1px solid #ddd;">2. Su Tüketim Özeti</h2>
+      ${generateTable('su')}
     </div>
   `;
 
   const options = {
     margin: [10, 10],
-    filename: `Tesis_Tuketim_Raporu_${selectedSummaryYear}.pdf`,
-    image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
     pagebreak: { mode: ['css', 'legacy'] }
   };
 
-  showToast('Rapor oluşturuluyor, lütfen bekleyin...');
-
   try {
-    // Wait a tiny bit for the browser to layout the container
-    await new Promise(r => setTimeout(r, 300));
+    // Wait for the DOM to settle
+    await new Promise(r => setTimeout(r, 500));
     await html2pdf().set(options).from(container).save();
-  } catch (error) {
-    console.error('PDF Export Error:', error);
-    showToast('Hata: Rapor oluşturulurken bir sorun oluştu.');
+    showToast('PDF başarıyla indirildi.');
+  } catch (err) {
+    console.error(err);
+    showToast('Hata: PDF oluşturulamadı.');
   } finally {
     document.body.removeChild(container);
   }
