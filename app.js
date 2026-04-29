@@ -445,7 +445,7 @@ function updateConsumptionPreview() {
   const val = parseInt(newIndexInput.value, 10);
   const date = readingDateInput.value;
   if (!isNaN(val) && date) {
-    const others = f.readings.filter(x => x.id !== editingReadingId).sort((a,b) => new Date(a.date) - new Date(b.date));
+    const others = f.readings.filter(x => x.id !== editingReadingId).sort((a,b) => new Date(a.date) - new Date(date))
     let prev = f.initialIndex;
     for(let x of others) { if (new Date(x.date) < new Date(date)) prev = x.index; }
     consumptionPreview.style.display = 'block';
@@ -572,16 +572,9 @@ async function exportToPDF() {
     await html2pdf().set(opt).from(reportHtml).save();
     showToast('Yıllık PDF Raporu başarıyla indirildi.');
   } catch (err) {
-
-
-
-
-
-
-
-
-
-
+    showToast('Hata: PDF oluşturulamadı.');
+  }
+}
 
 window.toggleAccordion = toggleAccordion;
 initApp();
