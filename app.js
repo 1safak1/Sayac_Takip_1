@@ -501,6 +501,18 @@ async function exportToPDF() {
     const list = facilities[cat] || [];
     if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px solid #ccc;">Veri bulunamadı.</div>`;
     
+    // Toplamları hesapla
+    const monthlyTotals = new Array(12).fill(0);
+    list.forEach(f => {
+      monthsFull.forEach((m, i) => {
+        const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
+        const reading = f.readings.find(r => r.date && r.date.startsWith(key));
+        if (reading) {
+          monthlyTotals[i] += summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
+        }
+      });
+    });
+
     let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
       <thead>
         <tr style="background:#f1f2f6;">
@@ -526,7 +538,15 @@ async function exportToPDF() {
       });
       t += `</tr>`;
     });
-    t += `</tbody></table>`;
+    
+    // Toplam Satırı (Tesis tüketimleri)
+    t += `</tbody><tfoot>
+        <tr style="background:#f1f2f6; font-weight:bold;">
+          <td style="border:1.1px solid #000; padding:6px; font-size:11px; color:#000; vertical-align:middle;">Tesis tüketimleri</td>`;
+    monthlyTotals.forEach(total => {
+      t += `<td style="border:1.1px solid #000; padding:6px; text-align:center !important; vertical-align:middle; color:#000; font-size:10.5px; font-family:'Arial Narrow',Arial,sans-serif; white-space:nowrap; letter-spacing:-0.3px;">${total.toLocaleString('tr-TR')}</td>`;
+    });
+    t += `</tr></tfoot></table>`;
     return t;
   };
 
