@@ -125,6 +125,7 @@ const summaryView = document.getElementById('summary-view');
 const summaryTable = document.getElementById('summary-table');
 const summaryToggleBtns = document.querySelectorAll('.toggle-btn');
 const summaryYearSelect = document.getElementById('summary-year-select');
+const btnExportPdf = document.getElementById('btn-export-pdf');
 
 // State
 let currentFacilityId = null;
@@ -389,6 +390,8 @@ summaryYearSelect.addEventListener('change', () => {
   renderSummary();
 });
 
+btnExportPdf.addEventListener('click', exportToPDF);
+
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
@@ -486,6 +489,67 @@ btnConfirmDelete.addEventListener('click', async () => {
 });
 btnCancelDelete.addEventListener('click', closeDeleteModal);
 btnCloseDeleteModal.addEventListener('click', closeDeleteModal);
+
+async function exportToPDF() {
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+  
+  // Create PDF Content
+  const element = document.createElement('div');
+  element.className = 'pdf-export-container';
+  
+  let html = `
+    <div class="pdf-title">Tesis Endeks Takip Raporu</div>
+    <div class="pdf-subtitle">${selectedSummaryYear} Yılı - Tüm Veriler</div>
+  `;
+
+  // Helper for table generation
+  const generateTableHtml = (category) => {
+    const list = facilities[category];
+    if (list.length === 0) return `<p style="text-align:center; color:#999; padding:20px;">Bu kategoride kayıtlı tesis bulunmamaktadır.</p>`;
+    
+    let t = `<table class="pdf-table"><thead><tr><th>Tesis Adı</th>`;
+    monthsShort.forEach(m => t += `<th>${m}</th>`);
+    t += `</tr></thead><tbody>`;
+    
+    list.forEach(f => {
+      t += `<tr><td>${escapeHtml(f.name)}</td>`;
+      months.forEach((m, i) => {
+        const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
+        const reading = f.readings.find(r => r.date.startsWith(key));
+        if (reading) {
+          const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
+          const cls = summaryDataType === 'consumption' ? 'pdf-val-c' : 'pdf-val-i';
+          t += `<td class="${cls}">${val.toLocaleString('tr-TR')}</td>`;
+        } else {
+          t += `<td style="color:#ccc">—</td>`;
+        }
+      });
+      t += `</tr>`;
+    });
+    t += `</tbody></table>`;
+    return t;
+  };
+
+  html += `<div class="pdf-section-title">Elektrik Tüketimi (${summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değeri'})</div>`;
+  html += generateTableHtml('elektrik');
+  
+  html += `<div class="pdf-section-title">Su Tüketimi (${summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değeri'})</div>`;
+  html += generateTableHtml('su');
+
+  element.innerHTML = html;
+
+  const opt = {
+    margin: 10,
+    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+  };
+
+  showToast('PDF Raporu hazırlanıyor...');
+  html2pdf().set(opt).from(element).save();
+}
 
 window.toggleAccordion = toggleAccordion;
 initApp();

@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="theme-red">
   <div class="app">
@@ -129,6 +130,15 @@
           <table class="summary-table" id="summary-table">
             <!-- Populated via JS -->
           </table>
+        </div>
+
+        <div class="summary-footer">
+          <button id="btn-export-pdf" class="btn btn-secondary btn-full">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            PDF Raporu Oluştur (Tüm Veriler)
+          </button>
         </div>
       </section>
     </div>
