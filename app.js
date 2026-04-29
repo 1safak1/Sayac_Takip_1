@@ -494,27 +494,22 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Veriler doğrulanıyor ve rapor hazırlanıyor...');
+  showToast('Rapor oluşturuluyor...');
 
-  // Ensure we have the latest data before export
   try {
     const freshData = await getStoredData();
     if (freshData) facilities = freshData;
-  } catch (e) {
-    console.error("Data fetch error", e);
-  }
+  } catch (e) { console.error(e); }
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
-    console.log(`Generating PDF table for ${cat}, count: ${list.length}`);
-    
     if (list.length === 0) {
-      return `<div style="text-align:center; padding:20px; border:1px dashed #ccc; color:#888; font-size:11px; margin-bottom:20px;">
+      return `<div style="text-align:center; padding:15px; border:1px dashed #ccc; color:#888; font-size:11px; margin-bottom:20px;">
         ${cat === 'elektrik' ? 'ELEKTRİK' : 'SU'} kategorisinde henüz kayıtlı bir tesis veya veri bulunmamaktadır.
       </div>`;
     }
     
-    let t = `<table style="width:100%; border-collapse:collapse; font-size:9px; margin-bottom:25px;">
+    let t = `<table style="width:100%; border-collapse:collapse; font-size:9px; margin-bottom:10px;">
       <thead><tr style="background:#f2f2f2;">
         <th style="border:1px solid #aaa; padding:8px; text-align:left; width:140px;">Tesis Adı</th>`;
     monthsShort.forEach(m => t += `<th style="border:1px solid #aaa; padding:8px; text-align:center;">${m}</th>`);
@@ -543,34 +538,37 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; background: #fff;">
-      <div style="text-align:center; border-bottom:3px solid #333; padding-bottom:15px; margin-bottom:30px;">
-        <h1 style="margin:0; font-size:24px; color:#000;">TESİS ENDEKS VE TÜKETİM RAPORU</h1>
-        <div style="margin-top:8px; font-size:14px; font-weight:bold; color:#555;">${selectedSummaryYear} Yılı - ${typeLabel.toUpperCase()}</div>
+    <div style="font-family: Arial, sans-serif; padding: 15px; color: #000; background: #fff;">
+      <div style="text-align:center; border-bottom:3px solid #333; padding-bottom:10px; margin-bottom:20px;">
+        <h1 style="margin:0; font-size:22px; color:#000;">TESİS ENDEKS VE TÜKETİM RAPORU</h1>
+        <div style="margin-top:5px; font-size:13px; font-weight:bold; color:#555;">${selectedSummaryYear} Yılı - ${typeLabel.toUpperCase()}</div>
       </div>
       
-      <div style="margin-bottom:40px;">
-        <h2 style="font-size:16px; color:#e11d48; margin-bottom:12px; border-bottom:2px solid #e11d48; padding-bottom:5px;">1. ELEKTRİK TÜKETİM ÖZETİ</h2>
+      <div style="margin-bottom:30px;">
+        <h2 style="font-size:15px; color:#e11d48; margin-bottom:10px; border-bottom:2px solid #e11d48; padding-bottom:5px;">1. ELEKTRİK TÜKETİM ÖZETİ</h2>
         ${generateTable('elektrik')}
       </div>
       
-      <div style="margin-bottom:40px;">
-        <h2 style="font-size:16px; color:#2563eb; margin-bottom:12px; border-bottom:2px solid #2563eb; padding-bottom:5px;">2. SU TÜKETİM ÖZETİ</h2>
+      <div class="html2pdf__page-break"></div>
+      
+      <div style="margin-top:10px;">
+        <h2 style="font-size:15px; color:#2563eb; margin-bottom:10px; border-bottom:2px solid #2563eb; padding-bottom:5px;">2. SU TÜKETİM ÖZETİ</h2>
         ${generateTable('su')}
       </div>
       
-      <div style="margin-top:40px; font-size:10px; color:#777; text-align:right; border-top:1px solid #eee; padding-top:10px;">
-        Rapor Oluşturma Zamanı: ${new Date().toLocaleString('tr-TR')} | Sayfa 1/1
+      <div style="margin-top:30px; font-size:9px; color:#777; text-align:right; border-top:1px solid #eee; padding-top:10px;">
+        Sistem Kayıt Tarihi: ${new Date().toLocaleString('tr-TR')}
       </div>
     </div>
   `;
 
   const opt = {
-    margin: [10, 10, 10, 10],
+    margin: 10,
     filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
     html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    pagebreak: { mode: ['css', 'legacy'] }
   };
 
   try {
@@ -581,6 +579,7 @@ async function exportToPDF() {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
