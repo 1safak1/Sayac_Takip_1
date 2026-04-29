@@ -495,11 +495,11 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Rapor hazırlanıyor...');
+  showToast('Rapor sağa hizalanıyor...');
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
-    if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px solid #ccc;">Veri yok.</div>`;
+    if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px solid #ccc;">Veri bulunamadı.</div>`;
     
     let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.2px solid #000;">
       <thead>
@@ -531,45 +531,50 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="width:1000px; background:#fff; font-family: Arial, sans-serif; color:#000; padding:10px;">
-      <div style="page-break-after:always; margin-bottom:30px;">
-        <div style="text-align:center; margin-bottom:25px; padding:20px; border:3px solid #eb4d4b;">
-          <h1 style="margin:0; font-size:24px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
-          <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+    <div style="width:1100px; background:#fff; padding:20px; padding-left:70px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
+      <div style="width:980px; background:#fff;">
+        <!-- ELEKTRİK SAYFASI -->
+        <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
+          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
+            <h1 style="margin:0; font-size:24px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
+            <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+          </div>
+          ${generateTable('elektrik')}
         </div>
-        ${generateTable('elektrik')}
-      </div>
-      
-      <div style="padding-top:10px;">
-        <div style="text-align:center; margin-bottom:25px; padding:20px; border:3px solid #0984e3;">
-          <h1 style="margin:0; font-size:24px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
-          <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+        
+        <!-- SU SAYFASI -->
+        <div style="padding-top:10px;">
+          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #0984e3;">
+            <h1 style="margin:0; font-size:24px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
+            <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+          </div>
+          ${generateTable('su')}
         </div>
-        ${generateTable('su')}
-      </div>
-      
-      <div style="margin-top:30px; font-size:12px; color:#666; text-align:right; border-top:1px solid #eee; padding-top:10px;">
-        Rapor Tarihi: ${new Date().toLocaleString('tr-TR')} | ${selectedSummaryYear} Yıllık Özet Raporu
+        
+        <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
+          Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}
+        </div>
       </div>
     </div>
   `;
 
   const opt = {
-    margin: 15,
-    filename: `Tesis_Yillik_Raporu_${selectedSummaryYear}.pdf`,
+    margin: 5,
+    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { scale: 2, useCORS: true, windowWidth: 1000 },
+    html2canvas: { scale: 2, useCORS: true, windowWidth: 1100, scrollX: 0, scrollY: 0 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
     pagebreak: { mode: ['css', 'legacy'] }
   };
 
   try {
     await html2pdf().set(opt).from(reportHtml).save();
-    showToast('PDF raporu başarıyla oluşturuldu.');
+    showToast('PDF başarıyla oluşturuldu.');
   } catch (err) {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
