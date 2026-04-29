@@ -494,19 +494,21 @@ async function exportToPDF() {
   const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   
-  // Create PDF Content
   const element = document.createElement('div');
   element.className = 'pdf-export-container';
+  element.style.position = 'fixed';
+  element.style.left = '-9999px';
+  element.style.top = '0';
+  document.body.appendChild(element);
   
   let html = `
     <div class="pdf-title">Tesis Endeks Takip Raporu</div>
-    <div class="pdf-subtitle">${selectedSummaryYear} Yılı - Tüm Veriler</div>
+    <div class="pdf-subtitle">${selectedSummaryYear} Yılı - Tüm Kayıtlar Raporu</div>
   `;
 
-  // Helper for table generation
   const generateTableHtml = (category) => {
-    const list = facilities[category];
-    if (list.length === 0) return `<p style="text-align:center; color:#999; padding:20px;">Bu kategoride kayıtlı tesis bulunmamaktadır.</p>`;
+    const list = facilities[category] || [];
+    if (list.length === 0) return `<p style="text-align:center; color:#666; padding:30px; border:1px dashed #ccc; border-radius:8px;">${category === 'elektrik' ? 'Elektrik' : 'Su'} kategorisinde henüz kayıtlı tesis bulunmamaktadır.</p>`;
     
     let t = `<table class="pdf-table"><thead><tr><th>Tesis Adı</th>`;
     monthsShort.forEach(m => t += `<th>${m}</th>`);
@@ -522,7 +524,7 @@ async function exportToPDF() {
           const cls = summaryDataType === 'consumption' ? 'pdf-val-c' : 'pdf-val-i';
           t += `<td class="${cls}">${val.toLocaleString('tr-TR')}</td>`;
         } else {
-          t += `<td style="color:#ccc">—</td>`;
+          t += `<td style="color:#ddd">—</td>`;
         }
       });
       t += `</tr>`;
@@ -531,27 +533,35 @@ async function exportToPDF() {
     return t;
   };
 
-  html += `<div class="pdf-section-title">Elektrik Tüketimi (${summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değeri'})</div>`;
+  html += `<div class="pdf-section-title">1. Elektrik Tüketim Özeti (${summaryDataType === 'consumption' ? 'Tüketim' : 'Endeks'})</div>`;
   html += generateTableHtml('elektrik');
   
-  html += `<div style="page-break-before: always;"></div>`; // Force new page for Water
+  html += `<div class="html2pdf__page-break"></div>`; 
   
-  html += `<div class="pdf-section-title">Su Tüketimi (${summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değeri'})</div>`;
+  html += `<div class="pdf-section-title">2. Su Tüketim Özeti (${summaryDataType === 'consumption' ? 'Tüketim' : 'Endeks'})</div>`;
   html += generateTableHtml('su');
 
   element.innerHTML = html;
 
   const opt = {
     margin: 10,
-    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
+    filename: `Tesis_Tuketim_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    pagebreak: { mode: ['css', 'legacy'] }
   };
 
-  showToast('PDF Raporu hazırlanıyor...');
-  html2pdf().set(opt).from(element).save();
+  showToast('Rapor PDF dosyasına aktarılıyor...');
+  
+  try {
+    await html2pdf().set(opt).from(element).save();
+  } catch (err) {
+    console.error('PDF Error:', err);
+    showToast('Hata: PDF oluşturulamadı.');
+  } finally {
+    document.body.removeChild(element);
+  }
 }
 
 window.toggleAccordion = toggleAccordion;
