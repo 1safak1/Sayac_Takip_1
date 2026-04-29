@@ -495,7 +495,7 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Mizanpaj güncelleniyor...');
+  showToast('Rapor sağa kaydırılıyor...');
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
@@ -504,7 +504,7 @@ async function exportToPDF() {
     let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
       <thead>
         <tr style="background:#f1f2f6;">
-          <th style="border:1.1px solid #000; padding:6px; text-align:left; font-size:9px; width:150px; color:#000;">Tesis Adı (${list.length})</th>`;
+          <th style="border:1.1px solid #000; padding:6px; text-align:left; font-size:9px; width:140px; color:#000;">Tesis Adı (${list.length})</th>`;
     monthsShort.forEach(m => t += `<th style="border:1.1px solid #000; padding:6px; text-align:center; font-size:9px; color:#000;">${m}</th>`);
     t += `</tr></thead><tbody>`;
     
@@ -531,9 +531,9 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="width:1122px; background:#fff; padding:20px; padding-left:65px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
-      <div style="width:1000px; background:#fff;">
-        <div style="page-break-after:always; margin-bottom:30px;">
+    <div style="width:1122px; background:#fff; padding:20px; padding-left:150px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
+      <div style="width:950px; background:#fff;">
+        <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
             <h1 style="margin:0; font-size:22px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
             <p style="font-size:13px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
@@ -572,6 +572,7 @@ async function exportToPDF() {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
