@@ -533,24 +533,28 @@ async function exportToPDF() {
   const reportHtml = `
     <div style="width:1122px; background:#fff; padding:20px; padding-left:100px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
       <div style="width:1020px; background:#fff;">
+        <!-- ELEKTRİK SAYFASI -->
         <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
             <h1 style="margin:0; font-size:24px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
             <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
           </div>
           ${generateTable('elektrik')}
+          <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
+            Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}
+          </div>
         </div>
         
+        <!-- SU SAYFASI -->
         <div style="padding-top:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #0984e3;">
             <h1 style="margin:0; font-size:24px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
             <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
           </div>
           ${generateTable('su')}
-        </div>
-        
-        <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
-          Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}
+          <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
+            Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}
+          </div>
         </div>
       </div>
     </div>
