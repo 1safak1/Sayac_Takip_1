@@ -504,8 +504,8 @@ async function exportToPDF() {
     let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1px solid #000;">
       <thead>
         <tr style="background:#f1f2f6;">
-          <th style="border:1px solid #000; padding:6px; text-align:left; font-size:10px; width:120px;">Tesis Adı (${list.length})</th>`;
-    monthsShort.forEach(m => t += `<th style="border:1px solid #000; padding:6px; text-align:center; font-size:9px;">${m}</th>`);
+          <th style="border:1px solid #000; padding:8px; text-align:left; font-size:11px; width:150px; color:#000;">Tesis Adı (${list.length})</th>`;
+    monthsShort.forEach(m => t += `<th style="border:1px solid #000; padding:8px; text-align:center; font-size:10px; color:#000;">${m}</th>`);
     t += `</tr></thead><tbody>`;
     
     list.forEach((f, index) => {
@@ -513,7 +513,7 @@ async function exportToPDF() {
         const readings = f.readings || [];
         const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
         t += `<tr style="background:${rowBg};">
-          <td style="border:1px solid #000; padding:6px; font-weight:bold; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(f.name || 'Tesis')}</td>`;
+          <td style="border:1px solid #000; padding:8px; font-weight:bold; font-size:10px; color:#000 !important; word-break:break-word;">${escapeHtml(f.name || 'Tesis')}</td>`;
         
         monthsFull.forEach((m, i) => {
           const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
@@ -521,9 +521,9 @@ async function exportToPDF() {
           if (reading) {
             const val = summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
             const color = cat === 'elektrik' ? '#d63031' : '#0984e3';
-            t += `<td style="border:1px solid #000; padding:6px; text-align:center; color:${color}; font-weight:bold; font-size:9px;">${val.toLocaleString('tr-TR')}</td>`;
+            t += `<td style="border:1px solid #000; padding:8px; text-align:center; color:${color}; font-weight:bold; font-size:10px;">${val.toLocaleString('tr-TR')}</td>`;
           } else {
-            t += `<td style="border:1px solid #000; padding:6px; text-align:center; color:#ccc; font-size:9px;">—</td>`;
+            t += `<td style="border:1px solid #000; padding:8px; text-align:center; color:#999; font-size:10px;">—</td>`;
           }
         });
         t += `</tr>`;
@@ -534,13 +534,13 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="width:1120px; background:#fff; padding:20px; box-sizing:border-box; font-family: Arial, sans-serif;">
-      <div style="width:100%; margin:0 auto; background:#fff; color:#000;">
+    <div style="width:1120px; background:#fff; padding:20px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
+      <div style="width:100%; margin:0 auto; background:#fff;">
         <!-- ELEKTRİK SAYFASI -->
         <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
-            <h1 style="margin:0; font-size:22px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
-            <p style="font-size:13px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+            <h1 style="margin:0; font-size:24px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
+            <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
           </div>
           ${generateTable('elektrik')}
         </div>
@@ -548,8 +548,8 @@ async function exportToPDF() {
         <!-- SU SAYFASI -->
         <div style="padding-top:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #0984e3;">
-            <h1 style="margin:0; font-size:22px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
-            <p style="font-size:13px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+            <h1 style="margin:0; font-size:24px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
+            <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
           </div>
           ${generateTable('su')}
         </div>
@@ -577,6 +577,7 @@ async function exportToPDF() {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
