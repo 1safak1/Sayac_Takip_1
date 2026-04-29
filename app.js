@@ -492,13 +492,16 @@ btnCloseDeleteModal.addEventListener('click', closeDeleteModal);
 async function exportToPDF() {
   const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+  
+  const category = activeTab === 'elek-summary' || activeTab === 'elektrik' ? 'elektrik' : 'su';
+  const catLabel = category === 'elektrik' ? 'ELEKTRİK' : 'SU';
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Rapor sayfası düzenleniyor...');
+  showToast(`${catLabel} raporu hazırlanıyor...`);
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
-    if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px dashed #ccc; color:#888;">Veri bulunamadı.</div>`;
+    if (list.length === 0) return `<div style="text-align:center; padding:20px; border:1px dashed #ccc; color:#888;">Veri bulunamadı.</div>`;
     
     let t = `<table style="width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed; border:1px solid #000;">
       <thead><tr style="background:#eee;">
@@ -507,13 +510,13 @@ async function exportToPDF() {
     t += `</tr></thead><tbody>`;
     
     list.forEach(f => {
-      t += `<tr style="page-break-inside:avoid;"><td style="border:1px solid #000; padding:8px; font-weight:bold;">${escapeHtml(f.name || 'Tesis')}</td>`;
+      t += `<tr><td style="border:1px solid #000; padding:8px; font-weight:bold;">${escapeHtml(f.name || 'Tesis')}</td>`;
       months.forEach((m, i) => {
         const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
         const reading = f.readings.find(r => r.date && r.date.startsWith(key));
         if (reading) {
           const val = summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
-          const color = summaryDataType === 'consumption' ? '#008000' : '#0000FF';
+          const color = category === 'elektrik' ? '#ff4757' : '#2e86de';
           t += `<td style="border:1px solid #000; padding:8px; text-align:center; color:${color}; font-weight:bold;">${val.toLocaleString('tr-TR')}</td>`;
         } else {
           t += `<td style="border:1px solid #000; padding:8px; text-align:center; color:#ccc;">—</td>`;
@@ -528,37 +531,34 @@ async function exportToPDF() {
   const reportHtml = `
     <div style="width:1050px; background:#fff; padding:30px; font-family:Arial, sans-serif;">
       <div style="text-align:center; border-bottom:3px solid #000; margin-bottom:30px; padding-bottom:10px;">
-        <h1 style="margin:0; font-size:24px;">Tesis Endeks Takip Raporu</h1>
+        <h1 style="margin:0; font-size:24px;">Tesis ${catLabel} Tüketim Raporu</h1>
         <p style="margin:5px 0; font-size:14px;">${selectedSummaryYear} Yılı - ${typeLabel}</p>
       </div>
-      <div style="margin-bottom:50px;">
-        <h2 style="font-size:18px; border-bottom:2px solid #ff4757; color:#ff4757; padding-bottom:5px;">Elektrik Tüketim Özeti</h2>
-        ${generateTable('elektrik')}
+      <div style="margin-bottom:20px;">
+        ${generateTable(category)}
       </div>
-      <div class="html2pdf__page-break"></div>
-      <div style="margin-top:20px;">
-        <h2 style="font-size:18px; border-bottom:2px solid #2e86de; color:#2e86de; padding-bottom:5px;">Su Tüketim Özeti</h2>
-        ${generateTable('su')}
+      <div style="margin-top:30px; font-size:10px; color:#888; text-align:right;">
+        Rapor Oluşturma: ${new Date().toLocaleString('tr-TR')}
       </div>
     </div>
   `;
 
   const opt = {
     margin: 10,
-    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
+    filename: `${catLabel}_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
     html2canvas: { scale: 2, useCORS: true, windowWidth: 1200 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   };
 
   try {
     await html2pdf().set(opt).from(reportHtml).save();
-    showToast('PDF başarıyla oluşturuldu.');
+    showToast(`${catLabel} PDF başarıyla indirildi.`);
   } catch (err) {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
