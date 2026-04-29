@@ -495,35 +495,35 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast(`${selectedSummaryYear} Yıllık Raporu hazırlanıyor...`);
+  showToast('PDF raporu oluşturuluyor...');
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
-    if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px dashed #ccc; color:#888;">${cat.toUpperCase()} kategorisinde veri bulunamadı.</div>`;
+    if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px dashed #ccc; color:#888;">Veri yok.</div>`;
     
-    let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:25px; background:#fff; table-layout:fixed; border:1.5px solid #2f3542;">
+    let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:25px; background:#fff; table-layout:fixed; border:1px solid #333;">
       <thead>
-        <tr style="background:#f1f2f6; border-bottom:2px solid #2f3542;">
-          <th style="border:1px solid #2f3542; padding:8px; text-align:left; font-size:10px; width:130px;">Tesis Adı (${list.length})</th>`;
-    monthsShort.forEach(m => t += `<th style="border:1px solid #2f3542; padding:8px; text-align:center; font-size:9px;">${m}</th>`);
+        <tr style="background:#f1f2f6;">
+          <th style="border:1px solid #333; padding:6px; text-align:left; font-size:10px; width:120px;">Tesis Adı (${list.length})</th>`;
+    monthsShort.forEach(m => t += `<th style="border:1px solid #333; padding:6px; text-align:center; font-size:9px;">${m}</th>`);
     t += `</tr></thead><tbody>`;
     
     list.forEach((f, index) => {
       try {
         const readings = f.readings || [];
-        const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
         t += `<tr style="background:${rowBg};">
-          <td style="border:1px solid #2f3542; padding:8px; font-weight:bold; color:#2f3542; font-size:10px;">${escapeHtml(f.name || 'Tesis')}</td>`;
+          <td style="border:1px solid #333; padding:6px; font-weight:bold; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(f.name || 'Tesis')}</td>`;
         
         monthsFull.forEach((m, i) => {
           const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
           const reading = readings.find(r => r.date && r.date.startsWith(key));
           if (reading) {
             const val = summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
-            const color = cat === 'elektrik' ? '#eb4d4b' : '#0984e3';
-            t += `<td style="border:1px solid #2f3542; padding:8px; text-align:center; color:${color}; font-weight:bold; font-size:9px;">${val.toLocaleString('tr-TR')}</td>`;
+            const color = cat === 'elektrik' ? '#d63031' : '#0984e3';
+            t += `<td style="border:1px solid #333; padding:6px; text-align:center; color:${color}; font-weight:bold; font-size:9px;">${val.toLocaleString('tr-TR')}</td>`;
           } else {
-            t += `<td style="border:1px solid #2f3542; padding:8px; text-align:center; color:#ced4da; font-size:9px;">—</td>`;
+            t += `<td style="border:1px solid #333; padding:6px; text-align:center; color:#ccc; font-size:9px;">—</td>`;
           }
         });
         t += `</tr>`;
@@ -534,47 +534,46 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="width:1100px; padding:35px; background:#ffffff; color:#2f3542; font-family: Arial, sans-serif;">
-      <!-- ELEKTRİK SAYFASI -->
-      <div style="page-break-after:always; margin-bottom:40px;">
-        <div style="text-align:center; margin-bottom:30px; padding:20px; border:2px solid #eb4d4b; border-radius:5px;">
-          <h1 style="margin:0; font-size:24px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
-          <p style="font-size:14px; margin-top:5px; color:#57606f;">Tüm Tesislerin Yıllık ${typeLabel} Özeti</p>
+    <div style="width:1020px; padding:20px; background:#fff; font-family: Arial, sans-serif;">
+      <div style="page-break-after:always; border-bottom:1px solid #eee; margin-bottom:20px; padding-bottom:20px;">
+        <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
+          <h1 style="margin:0; font-size:22px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
+          <p style="font-size:13px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
         </div>
         ${generateTable('elektrik')}
       </div>
       
-      <!-- SU SAYFASI -->
       <div style="padding-top:10px;">
-        <div style="text-align:center; margin-bottom:30px; padding:20px; border:2px solid #0984e3; border-radius:5px;">
-          <h1 style="margin:0; font-size:24px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
-          <p style="font-size:14px; margin-top:5px; color:#57606f;">Tüm Tesislerin Yıllık ${typeLabel} Özeti</p>
+        <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #0984e3;">
+          <h1 style="margin:0; font-size:22px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
+          <p style="font-size:13px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
         </div>
         ${generateTable('su')}
       </div>
       
-      <div style="margin-top:40px; font-size:10px; color:#a4b0be; text-align:right; border-top:1px solid #f1f2f6; padding-top:15px;">
-        Rapor Oluşturma: ${new Date().toLocaleString('tr-TR')} | ${selectedSummaryYear} Yıllık Özet
+      <div style="margin-top:30px; font-size:10px; color:#999; text-align:right;">
+        Rapor Tarihi: ${new Date().toLocaleString('tr-TR')} | ${selectedSummaryYear} Yıllık Özet Raporu
       </div>
     </div>
   `;
 
   const opt = {
-    margin: 10,
-    filename: `Tesis_Yillik_Rapor_${selectedSummaryYear}.pdf`,
+    margin: 5,
+    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { scale: 1.5, useCORS: true, windowWidth: 1250 },
+    html2canvas: { scale: 2, useCORS: true, windowWidth: 1050 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
     pagebreak: { mode: ['css', 'legacy'] }
   };
 
   try {
     await html2pdf().set(opt).from(reportHtml).save();
-    showToast('Yıllık PDF Raporu başarıyla indirildi.');
+    showToast('PDF başarıyla indirildi.');
   } catch (err) {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 window.toggleAccordion = toggleAccordion;
 initApp();
