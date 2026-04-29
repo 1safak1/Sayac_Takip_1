@@ -494,34 +494,46 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Rapor hazırlanıyor...');
+  showToast('Veriler doğrulanıyor ve rapor hazırlanıyor...');
+
+  // Ensure we have the latest data before export
+  try {
+    const freshData = await getStoredData();
+    if (freshData) facilities = freshData;
+  } catch (e) {
+    console.error("Data fetch error", e);
+  }
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
+    console.log(`Generating PDF table for ${cat}, count: ${list.length}`);
+    
     if (list.length === 0) {
-      return `<div style="text-align:center; padding:15px; border:1px dashed #ccc; color:#777; font-size:10px;">${cat.toUpperCase()} kategorisinde kayıtlı tesis bulunamadı.</div>`;
+      return `<div style="text-align:center; padding:20px; border:1px dashed #ccc; color:#888; font-size:11px; margin-bottom:20px;">
+        ${cat === 'elektrik' ? 'ELEKTRİK' : 'SU'} kategorisinde henüz kayıtlı bir tesis veya veri bulunmamaktadır.
+      </div>`;
     }
     
-    let t = `<table style="width:100%; border-collapse:collapse; font-size:9px; margin-bottom:15px;">
+    let t = `<table style="width:100%; border-collapse:collapse; font-size:9px; margin-bottom:25px;">
       <thead><tr style="background:#f2f2f2;">
-        <th style="border:1px solid #bbb; padding:6px; text-align:left; width:130px;">Tesis Adı</th>`;
-    monthsShort.forEach(m => t += `<th style="border:1px solid #bbb; padding:6px; text-align:center;">${m}</th>`);
+        <th style="border:1px solid #aaa; padding:8px; text-align:left; width:140px;">Tesis Adı</th>`;
+    monthsShort.forEach(m => t += `<th style="border:1px solid #aaa; padding:8px; text-align:center;">${m}</th>`);
     t += `</tr></thead><tbody>`;
     
     list.forEach(f => {
       const fName = f.name || 'İsimsiz Tesis';
       const readings = f.readings || [];
-      t += `<tr><td style="border:1px solid #bbb; padding:6px; font-weight:bold; background:#fcfcfc;">${escapeHtml(fName)}</td>`;
+      t += `<tr><td style="border:1px solid #aaa; padding:8px; font-weight:bold; background:#fafafa; color:#000;">${escapeHtml(fName)}</td>`;
       
       months.forEach((m, i) => {
         const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
         const reading = readings.find(r => r.date && r.date.startsWith(key));
         if (reading) {
           const val = summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
-          const color = summaryDataType === 'consumption' ? '#10b981' : '#3b82f6';
-          t += `<td style="border:1px solid #bbb; padding:6px; text-align:center; color:${color}; font-weight:bold;">${val.toLocaleString('tr-TR')}</td>`;
+          const color = summaryDataType === 'consumption' ? '#059669' : '#2563eb';
+          t += `<td style="border:1px solid #aaa; padding:8px; text-align:center; color:${color}; font-weight:bold;">${val.toLocaleString('tr-TR')}</td>`;
         } else {
-          t += `<td style="border:1px solid #bbb; padding:6px; text-align:center; color:#ddd;">—</td>`;
+          t += `<td style="border:1px solid #aaa; padding:8px; text-align:center; color:#bbb;">—</td>`;
         }
       });
       t += `</tr>`;
@@ -531,37 +543,34 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="font-family: Arial, sans-serif; padding: 15px; color: #111; background: #fff;">
-      <div style="text-align:center; border-bottom:2px solid #111; padding-bottom:12px; margin-bottom:20px;">
-        <h1 style="margin:0; font-size:20px; text-transform:uppercase;">Tesis Endeks ve Tüketim Takip Raporu</h1>
-        <div style="margin:6px 0; font-size:13px; font-weight:bold; color:#555;">${selectedSummaryYear} YILI GENEL ÖZETİ (${typeLabel.toUpperCase()})</div>
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; background: #fff;">
+      <div style="text-align:center; border-bottom:3px solid #333; padding-bottom:15px; margin-bottom:30px;">
+        <h1 style="margin:0; font-size:24px; color:#000;">TESİS ENDEKS VE TÜKETİM RAPORU</h1>
+        <div style="margin-top:8px; font-size:14px; font-weight:bold; color:#555;">${selectedSummaryYear} Yılı - ${typeLabel.toUpperCase()}</div>
       </div>
       
-      <div style="margin-bottom:25px;">
-        <h2 style="font-size:14px; margin-bottom:8px; padding:6px 10px; background:#f1f5f9; border-left:4px solid #ef4444; color:#0f172a;">1. ELEKTRİK TÜKETİM TABLOSU</h2>
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:16px; color:#e11d48; margin-bottom:12px; border-bottom:2px solid #e11d48; padding-bottom:5px;">1. ELEKTRİK TÜKETİM ÖZETİ</h2>
         ${generateTable('elektrik')}
       </div>
       
-      <div class="html2pdf__page-break"></div>
-      
-      <div style="margin-top:20px;">
-        <h2 style="font-size:14px; margin-bottom:8px; padding:6px 10px; background:#f1f5f9; border-left:4px solid #3b82f6; color:#0f172a;">2. SU TÜKETİM TABLOSU</h2>
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:16px; color:#2563eb; margin-bottom:12px; border-bottom:2px solid #2563eb; padding-bottom:5px;">2. SU TÜKETİM ÖZETİ</h2>
         ${generateTable('su')}
       </div>
       
-      <div style="margin-top:25px; font-size:9px; color:#94a3b8; text-align:right; border-top:1px solid #f1f5f9; padding-top:10px;">
-        Sistem Kayıt Tarihi: ${new Date().toLocaleString('tr-TR')} | Sayfa 1/2
+      <div style="margin-top:40px; font-size:10px; color:#777; text-align:right; border-top:1px solid #eee; padding-top:10px;">
+        Rapor Oluşturma Zamanı: ${new Date().toLocaleString('tr-TR')} | Sayfa 1/1
       </div>
     </div>
   `;
 
   const opt = {
-    margin: [10, 10],
+    margin: [10, 10, 10, 10],
     filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
     html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-    pagebreak: { mode: ['css', 'legacy'] }
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   };
 
   try {
@@ -569,9 +578,10 @@ async function exportToPDF() {
     showToast('PDF Raporu başarıyla oluşturuldu.');
   } catch (err) {
     console.error('PDF Export Error:', err);
-    showToast('Hata: Rapor dosyası oluşturulamadı.');
+    showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 window.toggleAccordion = toggleAccordion;
