@@ -534,17 +534,20 @@ async function exportToPDF() {
   html += `<div class="pdf-section-title">Elektrik Tüketimi (${summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değeri'})</div>`;
   html += generateTableHtml('elektrik');
   
+  html += `<div style="page-break-before: always;"></div>`; // Force new page for Water
+  
   html += `<div class="pdf-section-title">Su Tüketimi (${summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değeri'})</div>`;
   html += generateTableHtml('su');
 
   element.innerHTML = html;
 
   const opt = {
-    margin: 5,
+    margin: 10,
     filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { scale: 3, useCORS: true, logging: false, letterRendering: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   showToast('PDF Raporu hazırlanıyor...');
