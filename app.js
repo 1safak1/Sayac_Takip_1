@@ -536,7 +536,7 @@ async function exportToPDF() {
         <!-- ELEKTRİK SAYFASI -->
         <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
-            <h1 style="margin:0; font-size:24px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
+            <h1 style="margin:0; font-size:24px; color:#eb4d4b;">HAT ${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
             <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
           </div>
           ${generateTable('elektrik')}
@@ -548,7 +548,7 @@ async function exportToPDF() {
         <!-- SU SAYFASI -->
         <div style="padding-top:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #0984e3;">
-            <h1 style="margin:0; font-size:24px; color:#0984e3;">${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
+            <h1 style="margin:0; font-size:24px; color:#0984e3;">HAT ${selectedSummaryYear} YILI SU TÜKETİM RAPORU</h1>
             <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
           </div>
           ${generateTable('su')}
