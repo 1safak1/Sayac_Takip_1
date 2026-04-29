@@ -495,7 +495,7 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Rapor oluşturuluyor...');
+  showToast('PDF raporu oluşturuluyor...');
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
@@ -534,10 +534,10 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="width:1100px; background:#fff; padding:20px 0;">
-      <div style="width:1020px; margin:0 auto; background:#fff; font-family: Arial, sans-serif; color:#000;">
+    <div style="width:1120px; background:#fff; padding:20px; box-sizing:border-box; font-family: Arial, sans-serif;">
+      <div style="width:100%; margin:0 auto; background:#fff; color:#000;">
         <!-- ELEKTRİK SAYFASI -->
-        <div style="page-break-after:always; margin-bottom:30px; padding-bottom:20px;">
+        <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
             <h1 style="margin:0; font-size:22px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
             <p style="font-size:13px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
@@ -554,7 +554,7 @@ async function exportToPDF() {
           ${generateTable('su')}
         </div>
         
-        <div style="margin-top:30px; font-size:10px; color:#999; text-align:right;">
+        <div style="margin-top:20px; font-size:10px; color:#999; text-align:right;">
           Rapor Tarihi: ${new Date().toLocaleString('tr-TR')} | ${selectedSummaryYear} Yıllık Özet Raporu
         </div>
       </div>
@@ -562,10 +562,10 @@ async function exportToPDF() {
   `;
 
   const opt = {
-    margin: 5,
+    margin: 0,
     filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { scale: 2, useCORS: true, windowWidth: 1100 },
+    html2canvas: { scale: 2, useCORS: true, windowWidth: 1122 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
     pagebreak: { mode: ['css', 'legacy'] }
   };
@@ -577,6 +577,7 @@ async function exportToPDF() {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
