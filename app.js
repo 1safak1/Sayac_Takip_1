@@ -495,7 +495,7 @@ async function exportToPDF() {
   const monthsShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const typeLabel = summaryDataType === 'consumption' ? 'Aylık Tüketim' : 'Endeks Değerleri';
 
-  showToast('Uzun veriler için optimize ediliyor...');
+  showToast('Sola hizalama düzeltiliyor...');
 
   const generateTable = (cat) => {
     const list = facilities[cat] || [];
@@ -531,8 +531,8 @@ async function exportToPDF() {
   };
 
   const reportHtml = `
-    <div style="width:1122px; background:#fff; padding:20px; padding-left:35px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
-      <div style="width:1050px; background:#fff;">
+    <div style="width:1122px; background:#fff; padding:20px; padding-left:100px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
+      <div style="width:1020px; background:#fff;">
         <div style="page-break-after:always; margin-bottom:30px; padding-bottom:10px;">
           <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #eb4d4b;">
             <h1 style="margin:0; font-size:20px; color:#eb4d4b;">${selectedSummaryYear} YILI ELEKTRİK TÜKETİM RAPORU</h1>
@@ -572,6 +572,7 @@ async function exportToPDF() {
     showToast('Hata: PDF oluşturulamadı.');
   }
 }
+
 
 
 
