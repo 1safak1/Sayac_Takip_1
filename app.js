@@ -229,8 +229,8 @@ function renderFacilityAccordion(f) {
           <div class="facility-text-info">
             <span class="facility-name">${escapeHtml(f.name)}</span>
             <div class="facility-index-summary">
-              <div class="summary-item"><span class="summary-label">Güncel Endeks</span><span class="summary-value highlight">${currentIndex.toLocaleString('tr-TR')}</span></div>
-              <div class="summary-item"><span class="summary-label">Toplam Tük.</span><span class="summary-value">${totalConsumption.toLocaleString('tr-TR')}</span></div>
+              <div class="summary-item"><span class="summary-label">Güncel ${activeTab === 'tesis' ? 'Değer' : 'Endeks'}</span><span class="summary-value highlight">${currentIndex.toLocaleString('tr-TR')} ${f.unit || ''}</span></div>
+              <div class="summary-item"><span class="summary-label">Toplam ${activeTab === 'tesis' ? 'Değişim' : 'Tük.'}</span><span class="summary-value">${totalConsumption.toLocaleString('tr-TR')} ${f.unit || ''}</span></div>
             </div>
           </div>
         </div>
@@ -246,9 +246,9 @@ function renderFacilityAccordion(f) {
       </div>
       <div class="accordion-content">
         <div class="subscriber-stats">
-          <div class="stat-box"><div class="stat-label">GÜNCEL ENDEKS</div><div class="stat-value">${currentIndex.toLocaleString('tr-TR')}</div></div>
-          <div class="stat-box"><div class="stat-label">SON TÜKETİM</div><div class="stat-value accent">${lastConsumption.toLocaleString('tr-TR')}</div></div>
-          <div class="stat-box"><div class="stat-label">TOPLAM TÜKETİM</div><div class="stat-value success">${totalConsumption.toLocaleString('tr-TR')}</div></div>
+          <div class="stat-box"><div class="stat-label">GÜNCEL ${activeTab === 'tesis' ? 'DEĞER' : 'ENDEKS'}</div><div class="stat-value">${currentIndex.toLocaleString('tr-TR')} ${f.unit || ''}</div></div>
+          <div class="stat-box"><div class="stat-label">SON ${activeTab === 'tesis' ? 'DEĞİŞİM' : 'TÜKETİM'}</div><div class="stat-value accent">${lastConsumption.toLocaleString('tr-TR')} ${f.unit || ''}</div></div>
+          <div class="stat-box"><div class="stat-label">TOPLAM ${activeTab === 'tesis' ? 'DEĞİŞİM' : 'TÜKETİM'}</div><div class="stat-value success">${totalConsumption.toLocaleString('tr-TR')} ${f.unit || ''}</div></div>
         </div>
         ${renderHistory(sortedReadings, f.id)}
         <div class="facility-actions-row">
@@ -295,7 +295,7 @@ function renderSummary() {
   }));
 
   const activeList = facilities[activeTab] || [];
-  let html = `<thead><tr><th>Tesis Adı</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
+  let html = `<thead><tr><th>${activeTab === 'tesis' ? 'Veri Adı' : 'Tesis Adı'}</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
 
   if (activeList.length === 0) {
     html += `<tr><td colspan="${monthsData.length + 1}" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
@@ -308,7 +308,8 @@ function renderSummary() {
           const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
           const cssClass = summaryDataType === 'consumption' ? 'val-consumption' : 'val-index';
           const noteMarker = reading.note ? `<span class="note-indicator" title="${escapeHtml(reading.note)}">*</span>` : '';
-          html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}${noteMarker}</td>`;
+          const unitLabel = f.unit ? ` <small style="font-size:0.7em; opacity:0.7;">${f.unit}</small>` : '';
+          html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}${unitLabel}${noteMarker}</td>`;
         } else { html += `<td class="empty-cell">—</td>`; }
       });
       html += `</tr>`;
@@ -371,10 +372,20 @@ navBtns.forEach(btn => {
       managementView.style.display = 'block';
       summaryView.style.display = 'none';
       
+      const lblName = document.getElementById('lbl-facility-name');
+      const lblInitial = document.getElementById('lbl-initial-index');
+      const unitGroup = document.getElementById('unit-group');
+
       if (activeTab === 'tesis') {
         activeTabName.textContent = 'Genel Tesis';
+        lblName.textContent = 'Veri Adı';
+        lblInitial.textContent = 'Başlangıç Değeri';
+        unitGroup.style.display = 'block';
       } else {
         activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
+        lblName.textContent = 'Tesis Adı';
+        lblInitial.textContent = 'Başlangıç Endeksi';
+        unitGroup.style.display = 'none';
       }
       document.getElementById('add-section').style.display = 'block';
       render(); 
@@ -414,18 +425,30 @@ btnExportPdf.addEventListener('click', exportToPDF);
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
-  const initial = parseInt(initialIndexInput.value, 10) || 0;
+  const initial = parseFloat(initialIndexInput.value) || 0;
+  const unit = document.getElementById('facility-unit').value.trim();
+  
   if (!name) return;
-  const newFacility = { id: generateId(), name, createdAt: new Date().toISOString(), initialIndex: initial, readings: [] };
+  const newFacility = { 
+    id: generateId(), 
+    name, 
+    createdAt: new Date().toISOString(), 
+    initialIndex: initial, 
+    unit: activeTab === 'tesis' ? unit : '',
+    readings: [] 
+  };
   facilities[activeTab].push(newFacility);
   await saveData();
   render();
-  nameInput.value = ''; initialIndexInput.value = ''; nameInput.focus();
+  nameInput.value = ''; initialIndexInput.value = ''; 
+  if(document.getElementById('facility-unit')) document.getElementById('facility-unit').value = '';
+  nameInput.focus();
+  
   let label = '';
   if (activeTab === 'elektrik') label = 'Elektrik';
   else if (activeTab === 'su') label = 'Su';
   else label = 'Genel Tesis';
-  showToast(`Tesis eklendi (${label}): ${name}`);
+  showToast(`${activeTab === 'tesis' ? 'Veri' : 'Tesis'} eklendi (${label}): ${name}`);
 });
 
 function openIndexModal(fid, rid = null) {
