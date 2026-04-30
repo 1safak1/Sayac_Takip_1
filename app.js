@@ -571,7 +571,23 @@ async function exportToPDF() {
     return t;
   };
 
-  const reportHtml = `
+  const reportHtml = activeTab === 'tesis' ? `
+    <div style="width:1122px; background:#fff; padding:20px; padding-left:100px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
+      <div style="width:1020px; background:#fff;">
+        <!-- GENEL TESİS SAYFASI -->
+        <div style="margin-bottom:30px; padding-bottom:10px;">
+          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #6c5ce7;">
+            <h1 style="margin:0; font-size:24px; color:#6c5ce7;">HAT ${selectedSummaryYear} YILI GENEL TESİS TÜKETİM RAPORU</h1>
+            <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+          </div>
+          ${generateTable('tesis')}
+          <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
+            Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}
+          </div>
+        </div>
+      </div>
+    </div>
+  ` : `
     <div style="width:1122px; background:#fff; padding:20px; padding-left:100px; box-sizing:border-box; font-family: Arial, sans-serif; color:#000;">
       <div style="width:1020px; background:#fff;">
         <!-- ELEKTRİK SAYFASI -->
@@ -601,9 +617,11 @@ async function exportToPDF() {
     </div>
   `;
 
+  const fileName = activeTab === 'tesis' ? `Genel_Tesis_Raporu_${selectedSummaryYear}.pdf` : `Elektrik_Su_Raporu_${selectedSummaryYear}.pdf`;
+
   const opt = {
     margin: 0,
-    filename: `Tesis_Raporu_${selectedSummaryYear}.pdf`,
+    filename: fileName,
     image: { type: 'jpeg', quality: 1.0 },
     html2canvas: { scale: 2, useCORS: true, windowWidth: 1122, scrollX: 0, scrollY: 0 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
