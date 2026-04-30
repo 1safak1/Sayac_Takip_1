@@ -131,6 +131,7 @@ const summaryView = document.getElementById('summary-view');
 const summaryTable = document.getElementById('summary-table');
 const summaryToggleBtns = document.querySelectorAll('.toggle-btn');
 const summaryYearSelect = document.getElementById('summary-year-select');
+const summaryDateSelect = document.getElementById('summary-date-select');
 const btnExportPdf = document.getElementById('btn-export-pdf');
 
 // State
@@ -304,32 +305,60 @@ function renderHistory(readings, facilityId) {
 }
 
 function renderSummary() {
-  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const monthsData = months.map((m, i) => ({
-    label: m,
-    key: `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`
-  }));
-
   const activeList = facilities[activeTab] || [];
-  let html = `<thead><tr><th>${activeTab === 'tesis' ? 'Veri Adı' : 'Tesis Adı'}</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
+  let html = '';
 
-  if (activeList.length === 0) {
-    html += `<tr><td colspan="${monthsData.length + 1}" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
-  } else {
-    activeList.forEach(f => {
-      html += `<tr><td>${escapeHtml(f.name)}</td>`;
-      monthsData.forEach(m => {
-        const reading = f.readings.find(r => r.date.startsWith(m.key));
+  if (activeTab === 'tesis') {
+    // Tesis: Günlük Rapor Tablosu
+    const selectedDateStr = summaryDateSelect.value; // YYYY-MM-DD
+    html = `<thead><tr><th>Veri Adı</th><th>Değer</th><th>Not</th></tr></thead><tbody>`;
+    if (activeList.length === 0) {
+      html += `<tr><td colspan="3" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
+    } else {
+      let hasData = false;
+      activeList.forEach(f => {
+        const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
         if (reading) {
-          const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
-          const cssClass = summaryDataType === 'consumption' ? 'val-consumption' : 'val-index';
-          const noteMarker = reading.note ? `<span class="note-indicator" title="${escapeHtml(reading.note)}">*</span>` : '';
+          hasData = true;
           const unitLabel = f.unit ? ` <small style="font-size:0.7em; opacity:0.7;">${f.unit}</small>` : '';
-          html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}${unitLabel}${noteMarker}</td>`;
-        } else { html += `<td class="empty-cell">—</td>`; }
+          html += `<tr>
+            <td>${escapeHtml(f.name)}</td>
+            <td class="val-index">${reading.index.toLocaleString('tr-TR')}${unitLabel}</td>
+            <td class="note-cell">${escapeHtml(reading.note || '—')}</td>
+          </tr>`;
+        }
       });
-      html += `</tr>`;
-    });
+      if (!hasData) {
+        html += `<tr><td colspan="3" style="text-align:center; padding: 40px;">Bu güne ait veri bulunamadı.</td></tr>`;
+      }
+    }
+  } else {
+    // Elektrik / Su: Aylık Rapor Tablosu
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const monthsData = months.map((m, i) => ({
+      label: m,
+      key: `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`
+    }));
+
+    html = `<thead><tr><th>Tesis Adı</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
+
+    if (activeList.length === 0) {
+      html += `<tr><td colspan="${monthsData.length + 1}" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
+    } else {
+      activeList.forEach(f => {
+        html += `<tr><td>${escapeHtml(f.name)}</td>`;
+        monthsData.forEach(m => {
+          const reading = f.readings.find(r => r.date.startsWith(m.key));
+          if (reading) {
+            const val = summaryDataType === 'consumption' ? reading.consumption : reading.index;
+            const cssClass = summaryDataType === 'consumption' ? 'val-consumption' : 'val-index';
+            const noteMarker = reading.note ? `<span class="note-indicator" title="${escapeHtml(reading.note)}">*</span>` : '';
+            html += `<td class="${cssClass}">${val.toLocaleString('tr-TR')}${noteMarker}</td>`;
+          } else { html += `<td class="empty-cell">—</td>`; }
+        });
+        html += `</tr>`;
+      });
+    }
   }
   html += `</tbody>`;
   summaryTable.innerHTML = html;
@@ -416,6 +445,27 @@ navBtns.forEach(btn => {
       else titlePrefix = 'Genel Tesis';
       
       summaryTitle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${titlePrefix} Tüketim Özeti`;
+      
+      // Tesis özetinde Değer/Fark seçimini gizle ve tarih seçiciyi göster
+      const toggleGroup = document.querySelector('.summary-toggle-group');
+      if (activeTab === 'tesis') {
+        toggleGroup.style.display = 'none';
+        summaryYearSelect.style.display = 'none';
+        summaryDateSelect.style.display = 'inline-block';
+        if (!summaryDateSelect.value) {
+          summaryDateSelect.value = new Date().toISOString().substring(0, 10);
+        }
+        summaryDataType = 'index'; // Her zaman değer göster
+      } else {
+        toggleGroup.style.display = 'flex';
+        summaryYearSelect.style.display = 'inline-block';
+        summaryDateSelect.style.display = 'none';
+        
+        // Diğer sekmelere geçince aktif olan butona göre veri tipini eski haline getir
+        const activeToggle = document.querySelector('.toggle-btn.active');
+        summaryDataType = activeToggle ? activeToggle.dataset.type : 'consumption';
+      }
+      
       populateYearSelect();
       renderSummary();
     }
@@ -434,6 +484,10 @@ summaryToggleBtns.forEach(btn => {
 
 summaryYearSelect.addEventListener('change', () => {
   selectedSummaryYear = parseInt(summaryYearSelect.value, 10);
+  renderSummary();
+});
+
+summaryDateSelect.addEventListener('change', () => {
   renderSummary();
 });
 
@@ -584,52 +638,86 @@ async function exportToPDF() {
     const list = facilities[cat] || [];
     if (list.length === 0) return `<div style="text-align:center; padding:15px; border:1px solid #ccc;">Veri bulunamadı.</div>`;
     
-    // Toplamları hesapla
-    const monthlyTotals = new Array(12).fill(0);
-    list.forEach(f => {
-      monthsFull.forEach((m, i) => {
-        const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
-        const reading = f.readings.find(r => r.date && r.date.startsWith(key));
-        if (reading) {
-          monthlyTotals[i] += summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
-        }
-      });
-    });
-
-    let t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
-      <thead>
-        <tr style="background:#f1f2f6;">
-          <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:130px; color:#000;">Tesis Adı (${list.length})</th>`;
-    monthsShort.forEach(m => t += `<th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; color:#000;">${m}</th>`);
-    t += `</tr></thead><tbody>`;
+    let t = '';
     
-    list.forEach((f, index) => {
-      const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
-      t += `<tr style="background:${rowBg};">
-        <td style="border:1.1px solid #000; padding:3px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name || 'Tesis')}</td>`;
+    if (cat === 'tesis') {
+      const selectedDateStr = summaryDateSelect.value || new Date().toISOString().substring(0, 10);
       
-      monthsFull.forEach((m, i) => {
-        const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
-        const reading = f.readings.find(r => r.date && r.date.startsWith(key));
+      t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
+        <thead>
+          <tr style="background:#f1f2f6;">
+            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:40%; color:#000;">Veri Adı</th>
+            <th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; width:20%; color:#000;">Değer</th>
+            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:40%; color:#000;">Not</th>
+          </tr>
+        </thead>
+        <tbody>`;
+        
+      let hasData = false;
+      list.forEach((f, index) => {
+        const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
         if (reading) {
-          const val = summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
-          const color = cat === 'elektrik' ? '#d63031' : '#0984e3';
-          t += `<td style="border:1.1px solid #000; padding:3px; text-align:center !important; vertical-align:middle; color:${color}; font-weight:bold; font-size:10.5px; font-family:'Arial Narrow',Arial,sans-serif; white-space:nowrap; letter-spacing:-0.3px;">${val.toLocaleString('tr-TR').trim()}</td>`;
-        } else {
-          t += `<td style="border:1.1px solid #000; padding:3px; text-align:center !important; vertical-align:middle; color:#999; font-size:10.5px;">—</td>`;
+          hasData = true;
+          const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+          t += `<tr style="background:${rowBg};">
+            <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
+            <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#fbc531; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
+            <td style="border:1.1px solid #000; padding:4px; font-size:10.5px; color:#333; vertical-align:middle; word-break:break-all;">${escapeHtml(reading.note || '—')}</td>
+          </tr>`;
         }
       });
-      t += `</tr>`;
-    });
+      if (!hasData) {
+        t += `<tr><td colspan="3" style="border:1.1px solid #000; padding:15px; text-align:center; font-size:11px; color:#666;">Bu güne ait veri bulunamadı.</td></tr>`;
+      }
+      t += `</tbody></table>`;
+      
+    } else {
+      const monthlyTotals = new Array(12).fill(0);
+      list.forEach(f => {
+        monthsFull.forEach((m, i) => {
+          const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
+          const reading = f.readings.find(r => r.date && r.date.startsWith(key));
+          if (reading) {
+            monthlyTotals[i] += summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
+          }
+        });
+      });
+
+      t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
+        <thead>
+          <tr style="background:#f1f2f6;">
+            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:130px; color:#000;">Tesis Adı (${list.length})</th>`;
+      monthsShort.forEach(m => t += `<th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; color:#000;">${m}</th>`);
+      t += `</tr></thead><tbody>`;
+      
+      list.forEach((f, index) => {
+        const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        t += `<tr style="background:${rowBg};">
+          <td style="border:1.1px solid #000; padding:3px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name || 'Tesis')}</td>`;
+        
+        monthsFull.forEach((m, i) => {
+          const key = `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`;
+          const reading = f.readings.find(r => r.date && r.date.startsWith(key));
+          if (reading) {
+            const val = summaryDataType === 'consumption' ? (reading.consumption || 0) : (reading.index || 0);
+            const color = cat === 'elektrik' ? '#d63031' : '#0984e3';
+            t += `<td style="border:1.1px solid #000; padding:3px; text-align:center !important; vertical-align:middle; color:${color}; font-weight:bold; font-size:10.5px; font-family:'Arial Narrow',Arial,sans-serif; white-space:nowrap; letter-spacing:-0.3px;">${val.toLocaleString('tr-TR').trim()}</td>`;
+          } else {
+            t += `<td style="border:1.1px solid #000; padding:3px; text-align:center !important; vertical-align:middle; color:#999; font-size:10.5px;">—</td>`;
+          }
+        });
+        t += `</tr>`;
+      });
+
+      t += `<tr>
+        <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11.5px; color:#000; text-align:right; vertical-align:middle; background:#f1f2f6;">TOPLAM :</td>`;
+      monthlyTotals.forEach(tot => {
+        const totalStr = tot > 0 ? tot.toLocaleString('tr-TR') : '—';
+        t += `<td style="border:1.1px solid #000; padding:4px; text-align:center !important; font-weight:bold; font-size:10.5px; color:#000; vertical-align:middle; font-family:'Arial Narrow',Arial,sans-serif; background:#f1f2f6; white-space:nowrap; letter-spacing:-0.3px;">${totalStr}</td>`;
+      });
+      t += `</tr></tbody></table>`;
+    }
     
-    // Toplam Satırı (Toplam Tüketim)
-    t += `</tbody><tfoot>
-        <tr style="background:#f1f2f6; font-weight:bold;">
-          <td style="border:1.1px solid #000; padding:6px; font-size:11px; color:#000; vertical-align:middle;">Toplam Tüketim</td>`;
-    monthlyTotals.forEach(total => {
-      t += `<td style="border:1.1px solid #000; padding:6px; text-align:center !important; vertical-align:middle; color:#000; font-size:10.5px; font-family:'Arial Narrow',Arial,sans-serif; white-space:nowrap; letter-spacing:-0.3px;">${total.toLocaleString('tr-TR')}</td>`;
-    });
-    t += `</tr></tfoot></table>`;
     return t;
   };
 
@@ -638,13 +726,13 @@ async function exportToPDF() {
       <div style="width:1020px; background:#fff;">
         <!-- GENEL TESİS SAYFASI -->
         <div style="margin-bottom:30px; padding-bottom:10px;">
-          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #6c5ce7;">
-            <h1 style="margin:0; font-size:24px; color:#6c5ce7;">HAT ${selectedSummaryYear} YILI GENEL TESİS TÜKETİM RAPORU</h1>
-            <p style="font-size:14px; margin:5px 0;">Yıllık ${typeLabel} Özeti</p>
+          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #fbc531;">
+            <h1 style="margin:0; font-size:24px; color:#fbc531;">GÜNLÜK TESİS VERİ RAPORU</h1>
+            <p style="font-size:14px; margin:5px 0;">Tarih: ${formatDate(summaryDateSelect.value || new Date().toISOString().substring(0, 10))}</p>
           </div>
           ${generateTable('tesis')}
           <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
-            Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}
+            Oluşturulma: ${new Date().toLocaleString('tr-TR')}
           </div>
         </div>
       </div>

@@ -128,13 +128,12 @@
             Tüketim Özeti
           </h2>
           <div class="summary-controls">
-            <select id="summary-year-select" class="year-select">
-              <!-- Dynamically populated -->
-            </select>
-            <div class="toggle-container">
+            <div class="summary-toggle-group">
               <button class="toggle-btn active" data-type="consumption">Tüketim</button>
               <button class="toggle-btn" data-type="index">Endeks</button>
             </div>
+            <select id="summary-year-select" class="form-select"></select>
+            <input type="date" id="summary-date-select" class="form-select" style="display:none;">
           </div>
         </div>
         
