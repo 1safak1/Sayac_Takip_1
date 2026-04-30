@@ -252,6 +252,9 @@ function renderFacilityAccordion(f) {
           </div>
         </div>
         <div class="header-actions">
+          <button class="btn-icon btn-delete-header" data-id="${f.id}" title="${activeTab === 'tesis' ? 'Veri Adını Sil' : 'Tesisi Sil'}" style="color:#d63031; background:transparent; border:none; padding:8px; cursor:pointer; margin-right:5px; border-radius:4px; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='rgba(214,48,49,0.1)'" onmouseout="this.style.background='transparent'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
           <button class="btn-enter-index" data-id="${f.id}" title="Yeni Endeks Gir">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -383,6 +386,9 @@ function attachEvents() {
   });
   document.querySelectorAll('.btn-delete-reading').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); deleteReading(btn.dataset.fid, btn.dataset.rid); });
+  });
+  document.querySelectorAll('.btn-delete-header').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openDeleteModal(btn.dataset.id); });
   });
 }
 
