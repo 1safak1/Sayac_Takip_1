@@ -373,18 +373,19 @@ navBtns.forEach(btn => {
       summaryView.style.display = 'none';
       
       const lblName = document.getElementById('lbl-facility-name');
-      const lblInitial = document.getElementById('lbl-initial-index');
+      const initialGroup = document.getElementById('lbl-initial-index').parentElement;
       const unitGroup = document.getElementById('unit-group');
 
       if (activeTab === 'tesis') {
         activeTabName.textContent = 'Genel Tesis';
         lblName.textContent = 'Veri Adı';
-        lblInitial.textContent = 'Başlangıç Değeri';
+        initialGroup.style.display = 'none'; // Hide Initial Value for Tesis
         unitGroup.style.display = 'block';
       } else {
         activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
         lblName.textContent = 'Tesis Adı';
-        lblInitial.textContent = 'Başlangıç Endeksi';
+        document.getElementById('lbl-initial-index').textContent = 'Başlangıç Endeksi';
+        initialGroup.style.display = 'block';
         unitGroup.style.display = 'none';
       }
       document.getElementById('add-section').style.display = 'block';
@@ -425,8 +426,13 @@ btnExportPdf.addEventListener('click', exportToPDF);
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
-  const initial = parseFloat(initialIndexInput.value) || 0;
   const unit = document.getElementById('facility-unit').value.trim();
+  
+  // Tesis için başlangıç değeri 0 kabul edilir, diğerleri için inputtan okunur
+  let initial = 0;
+  if (activeTab !== 'tesis') {
+    initial = parseFloat(initialIndexInput.value) || 0;
+  }
   
   if (!name) return;
   const newFacility = { 
