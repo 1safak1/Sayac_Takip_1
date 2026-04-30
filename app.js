@@ -194,9 +194,16 @@ function validateReading(facility, date, index, excludeId = null) {
 // ===== Render =====
 
 function render() {
-  const activeList = facilities[activeTab];
+  let activeList = [];
+  if (activeTab === 'tesis') {
+    activeList = [...facilities.elektrik, ...facilities.su];
+  } else {
+    activeList = facilities[activeTab];
+  }
+  
   facilityCount.textContent = activeList.length;
-  activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
+  if (activeTab === 'tesis') activeTabName.textContent = 'Tüm Tesisler';
+  else activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
 
   if (activeList.length === 0) {
     emptyState.style.display = 'flex';
@@ -290,7 +297,12 @@ function renderSummary() {
     key: `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`
   }));
 
-  const activeList = facilities[activeTab];
+  let activeList = [];
+  if (activeTab === 'tesis') {
+    activeList = [...facilities.elektrik, ...facilities.su];
+  } else {
+    activeList = facilities[activeTab];
+  }
   let html = `<thead><tr><th>Tesis Adı</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
 
   if (activeList.length === 0) {
@@ -351,24 +363,40 @@ navBtns.forEach(btn => {
     // Theme & Active Tab logic
     if (view.startsWith('elek')) {
       activeTab = 'elektrik';
-      document.body.classList.remove('theme-blue');
+      document.body.classList.remove('theme-blue', 'theme-purple');
       document.body.classList.add('theme-red');
-    } else {
+    } else if (view.startsWith('su')) {
       activeTab = 'su';
-      document.body.classList.remove('theme-red');
+      document.body.classList.remove('theme-red', 'theme-purple');
       document.body.classList.add('theme-blue');
+    } else {
+      activeTab = 'tesis'; // Unified view
+      document.body.classList.remove('theme-red', 'theme-blue');
+      document.body.classList.add('theme-purple');
     }
 
     if (view.endsWith('manage')) {
       managementView.style.display = 'block';
       summaryView.style.display = 'none';
-      activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
+      if (activeTab === 'tesis') {
+        activeTabName.textContent = 'Tüm Tesisler';
+        // Hide add section in unified view to avoid confusion on where to add
+        document.getElementById('add-section').style.display = 'none';
+      } else {
+        activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
+        document.getElementById('add-section').style.display = 'block';
+      }
       render(); 
     } else {
       managementView.style.display = 'none';
       summaryView.style.display = 'block';
       const summaryTitle = document.getElementById('summary-title');
-      summaryTitle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Tüketim Özeti`;
+      let titlePrefix = '';
+      if (activeTab === 'elektrik') titlePrefix = 'Elektrik';
+      else if (activeTab === 'su') titlePrefix = 'Su';
+      else titlePrefix = 'Genel Tesis';
+      
+      summaryTitle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${titlePrefix} Tüketim Özeti`;
       populateYearSelect();
       renderSummary();
     }
