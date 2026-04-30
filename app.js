@@ -642,31 +642,55 @@ async function exportToPDF() {
     if (cat === 'tesis') {
       const selectedDateStr = summaryDateSelect.value || new Date().toISOString().substring(0, 10);
       
-      t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
+      let topList = list;
+      let bottomList = [];
+      if (list.length > 4) {
+        topList = list.slice(0, list.length - 4);
+        bottomList = list.slice(list.length - 4);
+      }
+
+      const renderRows = (items) => {
+        let rowsHtml = '';
+        items.forEach((f, index) => {
+          const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
+          const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+          if (reading) {
+            rowsHtml += `<tr style="background:${rowBg};">
+              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
+              <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#fbc531; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
+            </tr>`;
+          } else {
+            rowsHtml += `<tr style="background:${rowBg};">
+              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
+              <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#999; font-size:11px;">— (Girilmedi)</td>
+            </tr>`;
+          }
+        });
+        return rowsHtml;
+      };
+      
+      t = `<table style="width:100%; border-collapse:collapse; margin-bottom:${bottomList.length > 0 ? '0px' : '20px'}; background:#fff; table-layout:fixed; border:1.1px solid #000;">
+        <colgroup><col style="width:60%;"><col style="width:40%;"></colgroup>
         <thead>
           <tr style="background:#f1f2f6;">
-            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:60%; color:#000;">Veri Adı</th>
-            <th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; width:40%; color:#000;">Değer</th>
+            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; color:#000;">Veri Adı</th>
+            <th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; color:#000;">Değer</th>
           </tr>
         </thead>
-        <tbody>`;
-        
-      list.forEach((f, index) => {
-        const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
-        const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
-        if (reading) {
-          t += `<tr style="background:${rowBg};">
-            <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
-            <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#fbc531; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
-          </tr>`;
-        } else {
-          t += `<tr style="background:${rowBg};">
-            <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
-            <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#999; font-size:11px;">— (Girilmedi)</td>
-          </tr>`;
-        }
-      });
-      t += `</tbody></table>`;
+        <tbody>
+          ${renderRows(topList)}
+        </tbody>
+      </table>`;
+
+      if (bottomList.length > 0) {
+        t += `<div style="height:15px;"></div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
+          <colgroup><col style="width:60%;"><col style="width:40%;"></colgroup>
+          <tbody>
+            ${renderRows(bottomList)}
+          </tbody>
+        </table>`;
+      }
       
     } else {
       const monthlyTotals = new Array(12).fill(0);
