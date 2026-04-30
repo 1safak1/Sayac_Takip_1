@@ -660,14 +660,18 @@ async function exportToPDF() {
         items.forEach((f, index) => {
           const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
           const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+          const isAzot = f.name === 'Tanktaki Sıvı Azot Değişimi';
+          const nameColor = isAzot ? '#d63031' : '#000000';
+          const valueColor = isAzot ? '#d63031' : '#000000';
+
           if (reading) {
             rowsHtml += `<tr style="background:${rowBg};">
-              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
-              <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#fbc531; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
+              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:${nameColor}; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
+              <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:${valueColor}; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
             </tr>`;
           } else {
             rowsHtml += `<tr style="background:${rowBg};">
-              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
+              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:${nameColor}; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
               <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#999; font-size:11px;">— (Girilmedi)</td>
             </tr>`;
           }
@@ -753,8 +757,8 @@ async function exportToPDF() {
       <div style="width:1020px; background:#fff;">
         <!-- GENEL TESİS SAYFASI -->
         <div style="margin-bottom:30px; padding-bottom:10px;">
-          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #fbc531;">
-            <h1 style="margin:0; font-size:24px; color:#fbc531;">GÜNLÜK TESİS VERİ RAPORU</h1>
+          <div style="text-align:center; margin-bottom:20px; padding:15px; border:2px solid #000000;">
+            <h1 style="margin:0; font-size:24px; color:#000000;">GÜNLÜK TESİS VERİ RAPORU</h1>
             <p style="font-size:14px; margin:5px 0;">Tarih: ${formatDate(summaryDateSelect.value || new Date().toISOString().substring(0, 10))}</p>
           </div>
           ${generateTable('tesis')}
