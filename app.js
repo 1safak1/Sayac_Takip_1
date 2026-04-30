@@ -693,11 +693,23 @@ async function exportToPDF() {
       </table>`;
 
       if (bottomList.length > 0) {
+        let bottomSum = 0;
+        bottomList.forEach(f => {
+          const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
+          if (reading && !isNaN(reading.index)) {
+            bottomSum += reading.index;
+          }
+        });
+
         t += `<div style="height:15px;"></div>
         <table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
           <colgroup><col style="width:60%;"><col style="width:40%;"></colgroup>
           <tbody>
             ${renderRows(bottomList)}
+            <tr style="background:#eef2f3;">
+              <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11.5px; color:#000; vertical-align:middle;">Toplam Kullanım</td>
+              <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#000; font-weight:bold; font-size:11.5px;">${bottomSum.toLocaleString('tr-TR')} Nm3</td>
+            </tr>
           </tbody>
         </table>`;
       }
