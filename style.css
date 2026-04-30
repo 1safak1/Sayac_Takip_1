@@ -55,11 +55,11 @@
   --accent-soft: rgba(46, 134, 222, 0.12);
 }
 
-.theme-purple {
-  --accent: #a29bfe;
-  --accent-hover: #6c5ce7;
-  --accent-glow: rgba(162, 155, 254, 0.25);
-  --accent-soft: rgba(162, 155, 254, 0.12);
+.theme-yellow {
+  --accent: #fbc531;
+  --accent-hover: #e1b12c;
+  --accent-glow: rgba(251, 197, 49, 0.25);
+  --accent-soft: rgba(251, 197, 49, 0.12);
 }
 
 /* Transition for theme change */

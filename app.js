@@ -410,7 +410,7 @@ navBtns.forEach(btn => {
     } else {
       activeTab = 'tesis'; // Unified view
       document.body.classList.remove('theme-red', 'theme-blue');
-      document.body.classList.add('theme-purple');
+      document.body.classList.add('theme-yellow');
     }
 
     if (view.endsWith('manage')) {
