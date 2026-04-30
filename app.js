@@ -315,22 +315,23 @@ function renderSummary() {
     if (activeList.length === 0) {
       html += `<tr><td colspan="3" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
     } else {
-      let hasData = false;
       activeList.forEach(f => {
         const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
+        const unitLabel = f.unit ? ` <small style="font-size:0.7em; opacity:0.7;">${f.unit}</small>` : '';
         if (reading) {
-          hasData = true;
-          const unitLabel = f.unit ? ` <small style="font-size:0.7em; opacity:0.7;">${f.unit}</small>` : '';
           html += `<tr>
             <td>${escapeHtml(f.name)}</td>
             <td class="val-index">${reading.index.toLocaleString('tr-TR')}${unitLabel}</td>
             <td class="note-cell">${escapeHtml(reading.note || '—')}</td>
           </tr>`;
+        } else {
+          html += `<tr>
+            <td>${escapeHtml(f.name)}</td>
+            <td class="empty-cell" style="text-align:center; color:#999;">—</td>
+            <td class="note-cell" style="color:#999;">Girilmedi</td>
+          </tr>`;
         }
       });
-      if (!hasData) {
-        html += `<tr><td colspan="3" style="text-align:center; padding: 40px;">Bu güne ait veri bulunamadı.</td></tr>`;
-      }
     }
   } else {
     // Elektrik / Su: Aylık Rapor Tablosu
@@ -653,22 +654,23 @@ async function exportToPDF() {
         </thead>
         <tbody>`;
         
-      let hasData = false;
       list.forEach((f, index) => {
         const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
+        const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
         if (reading) {
-          hasData = true;
-          const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
           t += `<tr style="background:${rowBg};">
             <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
             <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#fbc531; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
             <td style="border:1.1px solid #000; padding:4px; font-size:10.5px; color:#333; vertical-align:middle; word-break:break-all;">${escapeHtml(reading.note || '—')}</td>
           </tr>`;
+        } else {
+          t += `<tr style="background:${rowBg};">
+            <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
+            <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#999; font-size:11px;">—</td>
+            <td style="border:1.1px solid #000; padding:4px; font-size:10.5px; color:#999; vertical-align:middle; word-break:break-all;">Girilmedi</td>
+          </tr>`;
         }
       });
-      if (!hasData) {
-        t += `<tr><td colspan="3" style="border:1.1px solid #000; padding:15px; text-align:center; font-size:11px; color:#666;">Bu güne ait veri bulunamadı.</td></tr>`;
-      }
       t += `</tbody></table>`;
       
     } else {
