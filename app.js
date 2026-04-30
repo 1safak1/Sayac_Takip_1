@@ -774,9 +774,6 @@ async function exportToPDF() {
             <p style="font-size:14px; margin:5px 0;">Tarih: ${formatDate(summaryDateSelect.value || new Date().toISOString().substring(0, 10))}</p>
           </div>
           ${generateTable('tesis')}
-          <div style="margin-top:20px; font-size:11px; color:#666; text-align:right;">
-            Oluşturulma: ${new Date().toLocaleString('tr-TR')}
-          </div>
         </div>
       </div>
     </div>
