@@ -311,9 +311,9 @@ function renderSummary() {
   if (activeTab === 'tesis') {
     // Tesis: Günlük Rapor Tablosu
     const selectedDateStr = summaryDateSelect.value; // YYYY-MM-DD
-    html = `<thead><tr><th>Veri Adı</th><th>Değer</th><th>Not</th></tr></thead><tbody>`;
+    html = `<thead><tr><th>Veri Adı</th><th>Değer</th></tr></thead><tbody>`;
     if (activeList.length === 0) {
-      html += `<tr><td colspan="3" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
+      html += `<tr><td colspan="2" style="text-align:center; padding: 40px;">Henüz tesis eklenmedi</td></tr>`;
     } else {
       activeList.forEach(f => {
         const reading = f.readings.find(r => r.date.startsWith(selectedDateStr));
@@ -322,13 +322,11 @@ function renderSummary() {
           html += `<tr>
             <td>${escapeHtml(f.name)}</td>
             <td class="val-index">${reading.index.toLocaleString('tr-TR')}${unitLabel}</td>
-            <td class="note-cell">${escapeHtml(reading.note || '—')}</td>
           </tr>`;
         } else {
           html += `<tr>
             <td>${escapeHtml(f.name)}</td>
-            <td class="empty-cell" style="text-align:center; color:#999;">—</td>
-            <td class="note-cell" style="color:#999;">Girilmedi</td>
+            <td class="empty-cell" style="text-align:center; color:#999;">— (Girilmedi)</td>
           </tr>`;
         }
       });
@@ -647,9 +645,8 @@ async function exportToPDF() {
       t = `<table style="width:100%; border-collapse:collapse; margin-bottom:20px; background:#fff; table-layout:fixed; border:1.1px solid #000;">
         <thead>
           <tr style="background:#f1f2f6;">
-            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:40%; color:#000;">Veri Adı</th>
-            <th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; width:20%; color:#000;">Değer</th>
-            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:40%; color:#000;">Not</th>
+            <th style="border:1.1px solid #000; padding:4px; text-align:left; vertical-align:middle; font-size:11px; width:60%; color:#000;">Veri Adı</th>
+            <th style="border:1.1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:11px; width:40%; color:#000;">Değer</th>
           </tr>
         </thead>
         <tbody>`;
@@ -661,13 +658,11 @@ async function exportToPDF() {
           t += `<tr style="background:${rowBg};">
             <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
             <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#fbc531; font-weight:bold; font-size:11px;">${reading.index.toLocaleString('tr-TR')} ${f.unit || ''}</td>
-            <td style="border:1.1px solid #000; padding:4px; font-size:10.5px; color:#333; vertical-align:middle; word-break:break-all;">${escapeHtml(reading.note || '—')}</td>
           </tr>`;
         } else {
           t += `<tr style="background:${rowBg};">
             <td style="border:1.1px solid #000; padding:4px; font-weight:bold; font-size:11px; color:#000; vertical-align:middle; word-break:break-all;">${escapeHtml(f.name)}</td>
-            <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#999; font-size:11px;">—</td>
-            <td style="border:1.1px solid #000; padding:4px; font-size:10.5px; color:#999; vertical-align:middle; word-break:break-all;">Girilmedi</td>
+            <td style="border:1.1px solid #000; padding:4px; text-align:center !important; vertical-align:middle; color:#999; font-size:11px;">— (Girilmedi)</td>
           </tr>`;
         }
       });
