@@ -40,7 +40,7 @@ async function setStoredData(data) {
 }
 
 // ===== Data Management =====
-let facilities = { elektrik: [], su: [] };
+let facilities = { elektrik: [], su: [], tesis: [] };
 let activeTab = 'elektrik'; 
 
 async function initApp() {
@@ -194,15 +194,10 @@ function validateReading(facility, date, index, excludeId = null) {
 // ===== Render =====
 
 function render() {
-  let activeList = [];
-  if (activeTab === 'tesis') {
-    activeList = [...facilities.elektrik, ...facilities.su];
-  } else {
-    activeList = facilities[activeTab];
-  }
-  
+  const activeList = facilities[activeTab] || [];
   facilityCount.textContent = activeList.length;
-  if (activeTab === 'tesis') activeTabName.textContent = 'Tüm Tesisler';
+  
+  if (activeTab === 'tesis') activeTabName.textContent = 'Genel Tesis';
   else activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
 
   if (activeList.length === 0) {
@@ -297,12 +292,7 @@ function renderSummary() {
     key: `${selectedSummaryYear}-${String(i + 1).padStart(2, '0')}`
   }));
 
-  let activeList = [];
-  if (activeTab === 'tesis') {
-    activeList = [...facilities.elektrik, ...facilities.su];
-  } else {
-    activeList = facilities[activeTab];
-  }
+  const activeList = facilities[activeTab] || [];
   let html = `<thead><tr><th>Tesis Adı</th>${monthsData.map(m => `<th>${m.label}</th>`).join('')}</tr></thead><tbody>`;
 
   if (activeList.length === 0) {
@@ -378,14 +368,13 @@ navBtns.forEach(btn => {
     if (view.endsWith('manage')) {
       managementView.style.display = 'block';
       summaryView.style.display = 'none';
+      
       if (activeTab === 'tesis') {
-        activeTabName.textContent = 'Tüm Tesisler';
-        // Hide add section in unified view to avoid confusion on where to add
-        document.getElementById('add-section').style.display = 'none';
+        activeTabName.textContent = 'Genel Tesis';
       } else {
         activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
-        document.getElementById('add-section').style.display = 'block';
       }
+      document.getElementById('add-section').style.display = 'block';
       render(); 
     } else {
       managementView.style.display = 'none';
@@ -430,7 +419,11 @@ addForm.addEventListener('submit', async (e) => {
   await saveData();
   render();
   nameInput.value = ''; initialIndexInput.value = ''; nameInput.focus();
-  showToast(`Tesis eklendi (${activeTab === 'elektrik' ? 'Elektrik' : 'Su'}): ${name}`);
+  let label = '';
+  if (activeTab === 'elektrik') label = 'Elektrik';
+  else if (activeTab === 'su') label = 'Su';
+  else label = 'Genel Tesis';
+  showToast(`Tesis eklendi (${label}): ${name}`);
 });
 
 function openIndexModal(fid, rid = null) {
