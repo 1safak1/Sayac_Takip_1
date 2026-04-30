@@ -120,6 +120,7 @@ const toastMessage = document.getElementById('toast-message');
 
 // Navigation & Views
 const navBtns = document.querySelectorAll('.nav-btn');
+const catBtns = document.querySelectorAll('.cat-btn');
 const managementView = document.getElementById('management-view');
 const summaryView = document.getElementById('summary-view');
 const summaryTable = document.getElementById('summary-table');
@@ -132,6 +133,8 @@ let currentFacilityId = null;
 let editingReadingId = null; 
 let deleteFacilityId = null;
 let openAccordionId = null;
+let currentView = 'management'; // 'management' or 'summary'
+let activeTab = 'elektrik'; // 'elektrik' or 'su'
 let summaryDataType = 'consumption'; // 'consumption' or 'index'
 let selectedSummaryYear = new Date().getFullYear();
 
@@ -342,37 +345,57 @@ function toggleAccordion(id) {
   render();
 }
 
+// ===== View Update Logic =====
+
+function updateView() {
+  // Update Nav Buttons
+  navBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === currentView);
+  });
+
+  // Update Cat Buttons
+  catBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.cat === activeTab);
+  });
+
+  // Theme logic
+  if (activeTab === 'elektrik') {
+    document.body.classList.remove('theme-blue');
+    document.body.classList.add('theme-red');
+  } else {
+    document.body.classList.remove('theme-red');
+    document.body.classList.add('theme-blue');
+  }
+
+  // View Display logic
+  if (currentView === 'management') {
+    managementView.style.display = 'block';
+    summaryView.style.display = 'none';
+    activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
+    render();
+  } else {
+    managementView.style.display = 'none';
+    summaryView.style.display = 'block';
+    const summaryTitle = document.getElementById('summary-title');
+    summaryTitle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Tüketim Özeti`;
+    populateYearSelect();
+    renderSummary();
+  }
+}
+
 navBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    navBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const view = btn.dataset.view;
-    
-    // Theme & Active Tab logic
-    if (view.startsWith('elek')) {
-      activeTab = 'elektrik';
-      document.body.classList.remove('theme-blue');
-      document.body.classList.add('theme-red');
-    } else {
-      activeTab = 'su';
-      document.body.classList.remove('theme-red');
-      document.body.classList.add('theme-blue');
-    }
-
-    if (view.endsWith('manage')) {
-      managementView.style.display = 'block';
-      summaryView.style.display = 'none';
-      activeTabName.textContent = activeTab === 'elektrik' ? 'Elektrik' : 'Su';
-      render(); 
-    } else {
-      managementView.style.display = 'none';
-      summaryView.style.display = 'block';
-      const summaryTitle = document.getElementById('summary-title');
-      summaryTitle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${activeTab === 'elektrik' ? 'Elektrik' : 'Su'} Tüketim Özeti`;
-      populateYearSelect();
-      renderSummary();
-    }
+    currentView = btn.dataset.view;
     openAccordionId = null;
+    updateView();
+  });
+});
+
+catBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.cat;
+    openAccordionId = null;
+    updateView();
   });
 });
 
