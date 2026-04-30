@@ -401,11 +401,11 @@ navBtns.forEach(btn => {
     // Theme & Active Tab logic
     if (view.startsWith('elek')) {
       activeTab = 'elektrik';
-      document.body.classList.remove('theme-blue', 'theme-purple');
+      document.body.classList.remove('theme-blue', 'theme-yellow');
       document.body.classList.add('theme-red');
     } else if (view.startsWith('su')) {
       activeTab = 'su';
-      document.body.classList.remove('theme-red', 'theme-purple');
+      document.body.classList.remove('theme-red', 'theme-yellow');
       document.body.classList.add('theme-blue');
     } else {
       activeTab = 'tesis'; // Unified view
