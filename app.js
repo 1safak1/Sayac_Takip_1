@@ -45,7 +45,9 @@ let activeTab = 'elektrik';
 
 async function initApp() {
   const stored = await getStoredData();
-  facilities = (Array.isArray(stored)) ? { elektrik: [], su: [] } : stored;
+  // Ensure the structure is correct even if some keys are missing from DB
+  const defaults = { elektrik: [], su: [], tesis: [] };
+  facilities = (Array.isArray(stored)) ? defaults : { ...defaults, ...stored };
   
   // Set initial theme
   document.body.classList.add('theme-red');
