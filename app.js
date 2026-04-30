@@ -60,19 +60,23 @@ function populateYearSelect() {
   const years = new Set();
   const currentYear = new Date().getFullYear();
   years.add(currentYear); 
+  if (selectedSummaryYear) years.add(selectedSummaryYear); // Preserve selected year
   
-  // Sadece aktif sekmeye (Elektrik veya Su) ait yılları getir
-  facilities[activeTab].forEach(f => {
-    f.readings.forEach(r => {
-      const y = new Date(r.date).getFullYear();
-      years.add(y);
+  // Sadece aktif sekmeye ait yılları getir
+  if (facilities[activeTab]) {
+    facilities[activeTab].forEach(f => {
+      f.readings.forEach(r => {
+        if (r.date) {
+          const y = new Date(r.date).getFullYear();
+          years.add(y);
+        }
+      });
     });
-  });
+  }
 
   const sortedYears = Array.from(years).sort((a, b) => b - a);
   
-  // Eğer seçili yıl mevcut listede yoksa, en güncel yılı seç
-  if (!years.has(selectedSummaryYear)) {
+  if (!selectedSummaryYear) {
     selectedSummaryYear = sortedYears[0];
   }
   
