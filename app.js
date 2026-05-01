@@ -1,3 +1,32 @@
+// ===== File Handle Persistence (IndexedDB) =====
+const HANDLE_DB_NAME = 'FileHandleDB';
+const HANDLE_STORE_NAME = 'handles';
+
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(HANDLE_DB_NAME, 1);
+    request.onupgradeneeded = (e) => e.target.result.createObjectStore(HANDLE_STORE_NAME);
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveFileHandle(handle) {
+  const db = await openHandleDB();
+  const tx = db.transaction(HANDLE_STORE_NAME, 'readwrite');
+  tx.objectStore(HANDLE_STORE_NAME).put(handle, 'lastHandle');
+}
+
+async function getFileHandle() {
+  const db = await openHandleDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(HANDLE_STORE_NAME, 'readonly');
+    const request = tx.objectStore(HANDLE_STORE_NAME).get('lastHandle');
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+  });
+}
+
 // ===== Data Management =====
 let facilities = { elektrik: [], su: [], tesis: [] };
 let activeTab = 'elektrik'; 
@@ -5,18 +34,26 @@ let fileHandle = null; // Canlı JSON dosyası referansı
 
 async function initApp() {
   try {
-    // Başlangıçta data.json dosyasını oku
+    // 1. Önce data.json'ı fetch ile oku (Görsel doluluk için)
     const response = await fetch('data.json');
     if (response.ok) {
       const stored = await response.json();
       const defaults = { elektrik: [], su: [], tesis: [] };
       facilities = { ...defaults, ...stored };
-      showToast('Veriler data.json dosyasından yüklendi');
-    } else {
-      console.warn('data.json bulunamadı, varsayılan değerlerle başlanıyor.');
+    }
+
+    // 2. Kayıtlı bir dosya referansı var mı bak
+    const savedHandle = await getFileHandle();
+    if (savedHandle) {
+      fileHandle = savedHandle;
+      fileStatusText.textContent = `Hatırlandı: ${fileHandle.name} (İzin Bekleniyor)`;
+      fileStatusText.style.color = 'var(--warning)';
+      
+      // Kullanıcıya izin istemesi için bir ipucu ver
+      showToast('Kayıtlı dosya bulundu. Yazma yetkisi için lütfen "Bağlantıyı Yenile" butonuna basın.');
     }
   } catch (err) {
-    console.error('Veri yükleme hatası:', err);
+    console.error('Başlangıç hatası:', err);
   }
   
   // Başlangıç teması
@@ -915,6 +952,23 @@ async function connectToJSONFile() {
   }
 
   try {
+    // Eğer hali hazırda bir handle varsa ve izin istiyorsak
+    if (fileHandle) {
+      const permission = await fileHandle.requestPermission({ mode: 'readwrite' });
+      if (permission === 'granted') {
+        const file = await fileHandle.getFile();
+        const content = await file.text();
+        facilities = JSON.parse(content);
+        render();
+        renderSummary();
+        fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
+        fileStatusText.style.color = 'var(--success)';
+        showToast('Bağlantı tazelendi.');
+        return;
+      }
+    }
+
+    // Yoksa yeni dosya seçtir
     const [handle] = await window.showOpenFilePicker({
       types: [{
         description: 'JSON Veri Dosyası',
@@ -924,6 +978,8 @@ async function connectToJSONFile() {
     });
 
     fileHandle = handle;
+    await saveFileHandle(fileHandle); // Handle'ı hafızaya kaydet
+    
     const file = await fileHandle.getFile();
     const content = await file.text();
     
@@ -935,16 +991,14 @@ async function connectToJSONFile() {
         renderSummary();
         fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
         fileStatusText.style.color = 'var(--success)';
-        showToast('Dosya başarıyla bağlandı ve veriler yüklendi');
-      } else {
-        throw new Error('Dosya formatı uyumsuz.');
+        showToast('Dosya bağlandı ve hafızaya alındı.');
       }
     } catch (e) {
-      alert('Seçilen dosya geçerli bir veri dosyası değil!');
+      alert('Hata: Dosya içeriği geçersiz.');
       fileHandle = null;
     }
   } catch (err) {
-    console.error('Dosya seçilmedi:', err);
+    console.error('Dosya işlemi iptal edildi:', err);
   }
 }
 

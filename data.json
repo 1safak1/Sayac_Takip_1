@@ -331,10 +331,24 @@
       "unit": "",
       "readings": [
         {
+          "id": "monbwj2xhd2ix",
+          "date": "2026-01-01T00:00:00.000Z",
+          "index": 2,
+          "consumption": 2,
+          "note": ""
+        },
+        {
+          "id": "monbxezmhko22",
+          "date": "2026-02-01T00:00:00.000Z",
+          "index": 12,
+          "consumption": 10,
+          "note": ""
+        },
+        {
           "id": "monbgnvl1s3ji",
           "date": "2026-05-01T00:00:00.000Z",
           "index": 2313,
-          "consumption": 2313,
+          "consumption": 2301,
           "note": ""
         }
       ]
