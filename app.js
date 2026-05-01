@@ -1,55 +1,25 @@
-// ===== IndexedDB Wrapper =====
-const DB_NAME = 'TesisTakipDB';
-const STORE_NAME = 'facilities_v2'; 
-const DB_VERSION = 2;
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-    request.onsuccess = (event) => resolve(event.target.result);
-    request.onerror = (event) => reject(event.target.error);
-  });
-}
-
-async function getStoredData() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get('data');
-    request.onsuccess = () => resolve(request.result || { elektrik: [], su: [] });
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function setStoredData(data) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(data, 'data');
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-}
-
 // ===== Data Management =====
 let facilities = { elektrik: [], su: [], tesis: [] };
 let activeTab = 'elektrik'; 
 let fileHandle = null; // Canlı JSON dosyası referansı
+
 async function initApp() {
-  const stored = await getStoredData();
-  // Ensure the structure is correct even if some keys are missing from DB
-  const defaults = { elektrik: [], su: [], tesis: [] };
-  facilities = (Array.isArray(stored)) ? defaults : { ...defaults, ...stored };
+  try {
+    // Başlangıçta data.json dosyasını oku
+    const response = await fetch('data.json');
+    if (response.ok) {
+      const stored = await response.json();
+      const defaults = { elektrik: [], su: [], tesis: [] };
+      facilities = { ...defaults, ...stored };
+      showToast('Veriler data.json dosyasından yüklendi');
+    } else {
+      console.warn('data.json bulunamadı, varsayılan değerlerle başlanıyor.');
+    }
+  } catch (err) {
+    console.error('Veri yükleme hatası:', err);
+  }
   
-  // Set initial theme
+  // Başlangıç teması
   document.body.classList.add('theme-red');
   
   populateYearSelect();
@@ -88,10 +58,17 @@ function populateYearSelect() {
 }
 
 async function saveData() {
-  await setStoredData(facilities);
-  
-  // Eğer bir dosyaya bağlıysak, doğrudan o dosyaya da yaz
-  if (fileHandle) {
+  // Eğer dosya bağlantısı yoksa, kullanıcıyı bağlamaya zorla
+  if (!fileHandle) {
+    const autoConnect = await confirm('Değişikliklerin kaydedilmesi için data.json dosyasına yazma yetkisi vermeniz gerekiyor. Şimdi bağlansın mı?');
+    if (autoConnect) {
+      await connectToJSONFile();
+      // Eğer bağlandıysa yazmayı dene
+      if (fileHandle) await writeToConnectedFile();
+    } else {
+      showToast('UYARI: Veriler dosyaya kaydedilemedi!');
+    }
+  } else {
     await writeToConnectedFile();
   }
   
@@ -853,18 +830,6 @@ async function exportToPDF() {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 // ===== Export / Import Logic =====
 
 function exportToJSON() {
@@ -966,7 +931,6 @@ async function connectToJSONFile() {
       const data = JSON.parse(content);
       if (data.elektrik && data.su && data.tesis) {
         facilities = data;
-        await setStoredData(facilities); // Tarayıcı yedeğini de güncelle
         render();
         renderSummary();
         fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
