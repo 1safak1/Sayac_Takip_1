@@ -18,39 +18,76 @@ async function saveFileHandle(handle) {
 }
 
 async function getFileHandle() {
-  const db = await openHandleDB();
-  return new Promise((resolve) => {
-    const tx = db.transaction(HANDLE_STORE_NAME, 'readonly');
-    const request = tx.objectStore(HANDLE_STORE_NAME).get('lastHandle');
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => resolve(null);
-  });
+  try {
+    const db = await openHandleDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(HANDLE_STORE_NAME, 'readonly');
+      const request = tx.objectStore(HANDLE_STORE_NAME).get('lastHandle');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    console.error('Handle DB error:', err);
+    return null;
+  }
+}
+
+function updateFileStatus() {
+  if (!fileStatusText) return;
+  
+  if (isFileConnected && fileHandle) {
+    fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
+    fileStatusText.style.color = 'var(--success)';
+  } else if (fileHandle) {
+    fileStatusText.textContent = `Hatırlandı: ${fileHandle.name} (İzin Bekleniyor...)`;
+    fileStatusText.style.color = 'var(--warning)';
+  } else {
+    fileStatusText.textContent = 'Bağlı değil (Tarayıcı hafızası kullanılıyor)';
+    fileStatusText.style.color = 'var(--text-muted)';
+  }
 }
 
 // ===== Data Management =====
+const LOCAL_DATA_KEY = 'tesis_endeks_data';
 let facilities = { elektrik: [], su: [], tesis: [] };
 let activeTab = 'elektrik'; 
 let fileHandle = null; // Canlı JSON dosyası referansı
+let isFileConnected = false;
 
 async function initApp() {
   try {
-    // 1. Önce data.json'ı fetch ile oku (Görsel doluluk için)
-    const response = await fetch('data.json');
-    if (response.ok) {
-      const stored = await response.json();
-      const defaults = { elektrik: [], su: [], tesis: [] };
-      facilities = { ...defaults, ...stored };
+    // 1. Önce LocalStorage'dan yükle (En güncel yerel veri)
+    const localData = localStorage.getItem(LOCAL_DATA_KEY);
+    if (localData) {
+      facilities = JSON.parse(localData);
+    } else {
+      // 2. Eğer yerelde yoksa data.json'ı fetch ile oku (Varsayılan veri)
+      const response = await fetch('data.json');
+      if (response.ok) {
+        const stored = await response.json();
+        const defaults = { elektrik: [], su: [], tesis: [] };
+        facilities = { ...defaults, ...stored };
+      }
     }
 
-    // 2. Kayıtlı bir dosya referansı var mı bak
+    // 3. Kayıtlı bir dosya referansı var mı bak
     const savedHandle = await getFileHandle();
     if (savedHandle) {
       fileHandle = savedHandle;
-      fileStatusText.textContent = `Hatırlandı: ${fileHandle.name} (İzin Bekleniyor)`;
-      fileStatusText.style.color = 'var(--warning)';
+      updateFileStatus();
       
-      // Kullanıcıya izin istemesi için bir ipucu ver
-      showToast('Kayıtlı dosya bulundu. Yazma yetkisi için lütfen "Bağlantıyı Yenile" butonuna basın.');
+      // Kullanıcı herhangi bir etkileşimde bulunduğunda otomatik bağlanmayı dene
+      const connectTrigger = async () => {
+        await autoConnectHandler();
+        document.removeEventListener('click', connectTrigger);
+        document.removeEventListener('keydown', connectTrigger);
+      };
+      document.addEventListener('click', connectTrigger);
+      document.addEventListener('keydown', connectTrigger);
+      
+      showToast('Kayıtlı dosya bulundu. Devam etmek için herhangi bir yere tıklayın.');
+    } else {
+      updateFileStatus();
     }
   } catch (err) {
     console.error('Başlangıç hatası:', err);
@@ -61,6 +98,46 @@ async function initApp() {
   
   populateYearSelect();
   render();
+}
+
+async function autoConnectHandler() {
+  if (fileHandle && !isFileConnected) {
+    try {
+      // Önce mevcut izni kontrol et
+      const options = { mode: 'readwrite' };
+      if (await fileHandle.queryPermission(options) !== 'granted') {
+        if (await fileHandle.requestPermission(options) !== 'granted') {
+          console.warn('Dosya izni reddedildi.');
+          return;
+        }
+      }
+      
+      const file = await fileHandle.getFile();
+      const content = await file.text();
+      
+      if (content.trim()) {
+        const data = JSON.parse(content);
+        if (data.elektrik && data.su && data.tesis) {
+          facilities = data;
+          isFileConnected = true;
+          localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(facilities));
+          
+          render();
+          renderSummary();
+          updateFileStatus();
+          showToast(`Dosya bağlandı: ${fileHandle.name}`);
+        }
+      } else {
+        // Dosya boşsa mevcut veriyi yazalım
+        await writeToConnectedFile();
+        isFileConnected = true;
+        updateFileStatus();
+      }
+    } catch (e) {
+      console.warn('Otomatik bağlantı sırasında hata:', e);
+      updateFileStatus();
+    }
+  }
 }
 
 function populateYearSelect() {
@@ -95,20 +172,38 @@ function populateYearSelect() {
 }
 
 async function saveData() {
-  // Eğer dosya bağlantısı yoksa, kullanıcıyı bağlamaya zorla
-  if (!fileHandle) {
-    const autoConnect = await confirm('Değişikliklerin kaydedilmesi için data.json dosyasına yazma yetkisi vermeniz gerekiyor. Şimdi bağlansın mı?');
-    if (autoConnect) {
-      await connectToJSONFile();
-      // Eğer bağlandıysa yazmayı dene
-      if (fileHandle) await writeToConnectedFile();
+  // Her zaman yerel depolamaya kaydet
+  localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(facilities));
+
+  // Eğer dosya bağlantısı yoksa veya izin yoksa
+  if (!isFileConnected) {
+    // Eğer bir handle hatırlanıyorsa ama henüz izin alınmadıysa
+    if (fileHandle) {
+      try {
+        const permission = await fileHandle.requestPermission({ mode: 'readwrite' });
+        if (permission === 'granted') {
+          isFileConnected = true;
+          await writeToConnectedFile();
+        } else {
+          showToast('UYARI: Dosya yazma izni verilmedi, veriler sadece tarayıcıda saklanıyor!');
+        }
+      } catch (err) {
+        showToast('Dosya bağlantısı kurulamadı. Lütfen manuel bağlayın.');
+      }
     } else {
-      showToast('UYARI: Veriler dosyaya kaydedilemedi!');
+      // Tamamen yeni bağlantı iste
+      const autoConnect = confirm('Değişikliklerin dosyaya (data.json) kaydedilmesi için bağlantı gerekiyor. Şimdi bağlansın mı?');
+      if (autoConnect) {
+        await connectToJSONFile();
+      } else {
+        showToast('BİLGİ: Veriler sadece tarayıcı hafızasına kaydedildi.');
+      }
     }
   } else {
     await writeToConnectedFile();
   }
   
+  updateFileStatus();
   populateYearSelect();
 }
 
@@ -959,6 +1054,8 @@ async function connectToJSONFile() {
         const file = await fileHandle.getFile();
         const content = await file.text();
         facilities = JSON.parse(content);
+        isFileConnected = true;
+        localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(facilities));
         render();
         renderSummary();
         fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
@@ -987,15 +1084,18 @@ async function connectToJSONFile() {
       const data = JSON.parse(content);
       if (data.elektrik && data.su && data.tesis) {
         facilities = data;
+        isFileConnected = true;
+        localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(facilities));
         render();
         renderSummary();
-        fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
-        fileStatusText.style.color = 'var(--success)';
+        updateFileStatus();
         showToast('Dosya bağlandı ve hafızaya alındı.');
       }
     } catch (e) {
-      alert('Hata: Dosya içeriği geçersiz.');
+      alert('Hata: Dosya içeriği geçersiz veya uyumsuz.');
       fileHandle = null;
+      isFileConnected = false;
+      updateFileStatus();
     }
   } catch (err) {
     console.error('Dosya işlemi iptal edildi:', err);
@@ -1010,12 +1110,13 @@ async function writeToConnectedFile() {
     await writable.write(JSON.stringify(facilities, null, 2));
     await writable.close();
     console.log('Veriler dosyaya yazıldı:', fileHandle.name);
+    isFileConnected = true;
+    updateFileStatus();
   } catch (err) {
     console.error('Dosyaya yazılamadı:', err);
     showToast('Hata: Dosyaya yazılamadı. Yetki verilmemiş olabilir.');
-    fileHandle = null;
-    fileStatusText.textContent = 'Hata: Bağlantı kesildi';
-    fileStatusText.style.color = 'var(--danger)';
+    isFileConnected = false;
+    updateFileStatus();
   }
 }
 
