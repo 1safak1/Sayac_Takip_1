@@ -56,6 +56,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Tesis Özet Rapor
       </button>
+      <button class="nav-btn" data-view="data-management">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M12 15V3"/><path d="M17 10l-5 5-5-5"/></svg>
+        Veri Yönetimi
+      </button>
     </nav>
 
     <!-- Management View -->
@@ -143,13 +147,63 @@
           </table>
         </div>
 
-        <div class="summary-footer">
+        <div class="summary-footer" style="display: flex; gap: 10px;">
           <button id="btn-export-pdf" class="btn btn-secondary btn-full">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            PDF Raporu Oluştur (Tüm Veriler)
+            PDF Raporu
           </button>
+          <button id="btn-export-csv" class="btn btn-ghost btn-full" style="border: 1px solid #ccc;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Excel (CSV)
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Data Management View -->
+    <div id="data-management-view" class="view-section" style="display:none;">
+      <section class="card">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            JSON Dosyası ile Çalış (Canlı Bağlantı)
+          </h2>
+        </div>
+        <div class="card-body" style="padding: 20px;">
+          <div id="file-status-box" style="padding: 15px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px dashed var(--border); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <p style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 4px;">Dosya Durumu:</p>
+              <span id="file-status-text" style="font-size: 0.85rem; color: var(--text-muted);">Bağlı değil (Tarayıcı hafızası kullanılıyor)</span>
+            </div>
+            <button id="btn-connect-file" class="btn btn-sm btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              Dosya Seç / Bağlan
+            </button>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+          
+          <h3 style="font-size: 1rem; margin-bottom: 15px;">Yedekleme ve Kurtarma</h3>
+          <p style="margin-bottom: 20px; color: #666; line-height: 1.5; font-size: 0.9rem;">Manuel olarak veri indirmek veya yüklemek için aşağıdaki butonları kullanabilirsiniz.</p>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <button id="btn-export-json" class="btn btn-primary btn-full" style="height: auto; padding: 20px; flex-direction: column; gap: 10px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Verileri JSON Olarak İndir</span>
+              <small style="font-weight: 400; opacity: 0.8;">(Tam Yedekleme)</small>
+            </button>
+            
+            <button id="btn-import-json-trigger" class="btn btn-secondary btn-full" style="height: auto; padding: 20px; flex-direction: column; gap: 10px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Yedekten Geri Yükle</span>
+              <small style="font-weight: 400; opacity: 0.8;">(JSON Dosyası Seçin)</small>
+            </button>
+          </div>
+          
+          <input type="file" id="import-json-input" accept=".json" style="display: none;">
         </div>
       </section>
     </div>

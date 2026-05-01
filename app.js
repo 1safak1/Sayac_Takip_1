@@ -42,7 +42,7 @@ async function setStoredData(data) {
 // ===== Data Management =====
 let facilities = { elektrik: [], su: [], tesis: [] };
 let activeTab = 'elektrik'; 
-
+let fileHandle = null; // Canlı JSON dosyası referansı
 async function initApp() {
   const stored = await getStoredData();
   // Ensure the structure is correct even if some keys are missing from DB
@@ -89,6 +89,12 @@ function populateYearSelect() {
 
 async function saveData() {
   await setStoredData(facilities);
+  
+  // Eğer bir dosyaya bağlıysak, doğrudan o dosyaya da yaz
+  if (fileHandle) {
+    await writeToConnectedFile();
+  }
+  
   populateYearSelect();
 }
 
@@ -133,6 +139,15 @@ const summaryToggleBtns = document.querySelectorAll('.toggle-btn');
 const summaryYearSelect = document.getElementById('summary-year-select');
 const summaryDateSelect = document.getElementById('summary-date-select');
 const btnExportPdf = document.getElementById('btn-export-pdf');
+const btnExportCsv = document.getElementById('btn-export-csv');
+
+// Data Management References
+const dataManagementView = document.getElementById('data-management-view');
+const btnExportJson = document.getElementById('btn-export-json');
+const btnImportJsonTrigger = document.getElementById('btn-import-json-trigger');
+const importJsonInput = document.getElementById('import-json-input');
+const btnConnectFile = document.getElementById('btn-connect-file');
+const fileStatusText = document.getElementById('file-status-text');
 
 // State
 let currentFacilityId = null;
@@ -412,15 +427,20 @@ navBtns.forEach(btn => {
       activeTab = 'su';
       document.body.classList.remove('theme-red', 'theme-yellow');
       document.body.classList.add('theme-blue');
-    } else {
-      activeTab = 'tesis'; // Unified view
+    } else if (view === 'tesis-manage' || view === 'tesis-summary') {
+      activeTab = 'tesis'; 
       document.body.classList.remove('theme-red', 'theme-blue');
       document.body.classList.add('theme-yellow');
     }
 
-    if (view.endsWith('manage')) {
+    if (view === 'data-management') {
+      managementView.style.display = 'none';
+      summaryView.style.display = 'none';
+      dataManagementView.style.display = 'block';
+    } else if (view.endsWith('manage')) {
       managementView.style.display = 'block';
       summaryView.style.display = 'none';
+      dataManagementView.style.display = 'none';
       
       const lblName = document.getElementById('lbl-facility-name');
       const initialGroup = document.getElementById('lbl-initial-index').parentElement;
@@ -497,6 +517,13 @@ summaryDateSelect.addEventListener('change', () => {
 });
 
 btnExportPdf.addEventListener('click', exportToPDF);
+btnExportCsv.addEventListener('click', exportToCSV);
+
+// Data Management Event Listeners
+btnExportJson.addEventListener('click', exportToJSON);
+btnImportJsonTrigger.addEventListener('click', () => importJsonInput.click());
+importJsonInput.addEventListener('change', importFromJSON);
+btnConnectFile.addEventListener('click', connectToJSONFile);
 
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -837,6 +864,142 @@ async function exportToPDF() {
 
 
 
+
+// ===== Export / Import Logic =====
+
+function exportToJSON() {
+  const dataStr = JSON.stringify(facilities, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `Tesis_Yedek_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast('Veriler JSON olarak indirildi');
+}
+
+async function importFromJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (event) => {
+    try {
+      const importedData = JSON.parse(event.target.result);
+      
+      // Basic validation
+      if (!importedData.elektrik || !importedData.su || !importedData.tesis) {
+        throw new Error('Geçersiz dosya formatı!');
+      }
+
+      if (confirm('Mevcut veriler silinecek ve yedekteki veriler yüklenecek. Onaylıyor musunuz?')) {
+        facilities = importedData;
+        await saveData();
+        render();
+        renderSummary();
+        showToast('Veriler başarıyla geri yüklendi');
+      }
+    } catch (err) {
+      alert('Hata: ' + err.message);
+    }
+    importJsonInput.value = ''; // Reset for next use
+  };
+  reader.readAsText(file);
+}
+
+function exportToCSV() {
+  const table = document.getElementById('summary-table');
+  if (!table || table.rows.length === 0) {
+    showToast('Dışa aktarılacak veri bulunamadı');
+    return;
+  }
+
+  let csvContent = "\uFEFF"; // UTF-8 BOM for Excel Turkish character support
+  
+  for (let i = 0; i < table.rows.length; i++) {
+    const row = table.rows[i];
+    const rowData = [];
+    for (let j = 0; j < row.cells.length; j++) {
+      let content = row.cells[j].innerText.replace(/\n/g, " ").replace(/;/g, ",");
+      rowData.push(`"${content}"`);
+    }
+    csvContent += rowData.join(";") + "\r\n";
+  }
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${activeTab}_Raporu_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast('Tablo CSV olarak indirildi');
+}
+
+// ===== Direct File System Access (Canlı JSON) =====
+
+async function connectToJSONFile() {
+  if (!('showOpenFilePicker' in window)) {
+    alert('Tarayıcınız doğrudan dosya erişimini desteklemiyor. Lütfen Chrome veya Edge kullanın.');
+    return;
+  }
+
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{
+        description: 'JSON Veri Dosyası',
+        accept: { 'application/json': ['.json'] },
+      }],
+      multiple: false
+    });
+
+    fileHandle = handle;
+    const file = await fileHandle.getFile();
+    const content = await file.text();
+    
+    try {
+      const data = JSON.parse(content);
+      if (data.elektrik && data.su && data.tesis) {
+        facilities = data;
+        await setStoredData(facilities); // Tarayıcı yedeğini de güncelle
+        render();
+        renderSummary();
+        fileStatusText.textContent = `Bağlı: ${fileHandle.name}`;
+        fileStatusText.style.color = 'var(--success)';
+        showToast('Dosya başarıyla bağlandı ve veriler yüklendi');
+      } else {
+        throw new Error('Dosya formatı uyumsuz.');
+      }
+    } catch (e) {
+      alert('Seçilen dosya geçerli bir veri dosyası değil!');
+      fileHandle = null;
+    }
+  } catch (err) {
+    console.error('Dosya seçilmedi:', err);
+  }
+}
+
+async function writeToConnectedFile() {
+  if (!fileHandle) return;
+
+  try {
+    const writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(facilities, null, 2));
+    await writable.close();
+    console.log('Veriler dosyaya yazıldı:', fileHandle.name);
+  } catch (err) {
+    console.error('Dosyaya yazılamadı:', err);
+    showToast('Hata: Dosyaya yazılamadı. Yetki verilmemiş olabilir.');
+    fileHandle = null;
+    fileStatusText.textContent = 'Hata: Bağlantı kesildi';
+    fileStatusText.style.color = 'var(--danger)';
+  }
+}
 
 window.toggleAccordion = toggleAccordion;
 initApp();

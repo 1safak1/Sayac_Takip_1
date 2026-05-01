@@ -1232,3 +1232,98 @@ input[type="number"]::-webkit-outer-spin-button {
     margin: 10px;
   }
 }
+/* ===== Data Management View Styling ===== */
+#data-management-view .card {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+#data-management-view .btn-full {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  height: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#data-management-view .btn-primary {
+  background: linear-gradient(135deg, var(--accent-soft), var(--bg-card));
+  color: var(--accent);
+  box-shadow: none;
+}
+
+#data-management-view .btn-primary:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px var(--accent-glow);
+}
+
+#data-management-view .btn-secondary {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), var(--bg-card));
+  color: var(--text-secondary);
+}
+
+#data-management-view .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#data-management-view .btn-full svg {
+  margin-bottom: 12px;
+  width: 32px;
+  height: 32px;
+}
+
+#data-management-view .btn-full span {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+#data-management-view .btn-full small {
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+/* Responsive Grid for Data Management */
+@media (max-width: 600px) {
+  #data-management-view .card-body div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Footer Export Buttons */
+.summary-footer .btn {
+  font-size: 0.85rem;
+  padding: 10px 16px;
+}
+
+.summary-footer .btn-ghost {
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.summary-footer .btn-ghost:hover {
+  border-color: var(--success);
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+/* Responsive Grid for Nav */
+@media (max-width: 768px) {
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

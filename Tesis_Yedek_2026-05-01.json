@@ -1,0 +1,513 @@
+{
+  "elektrik": [
+    {
+      "id": "moewqs0o1oz1n",
+      "name": "Tesis-1",
+      "createdAt": "2026-04-25T22:25:09.720Z",
+      "initialIndex": 0,
+      "readings": [
+        {
+          "id": "mog5a30a1caox",
+          "date": "2020-04-01T00:00:00.000Z",
+          "index": 2,
+          "consumption": 2
+        },
+        {
+          "id": "mog5f2tyqxpgo",
+          "date": "2023-04-01T00:00:00.000Z",
+          "index": 4,
+          "consumption": 2
+        },
+        {
+          "id": "mog5fq83rd5mc",
+          "date": "2023-05-01T00:00:00.000Z",
+          "index": 14,
+          "consumption": 10
+        },
+        {
+          "id": "mog5g0oxvpizi",
+          "date": "2023-07-01T00:00:00.000Z",
+          "index": 30,
+          "consumption": 16
+        },
+        {
+          "id": "mog5g6ni5vb42",
+          "date": "2024-04-01T00:00:00.000Z",
+          "index": 60,
+          "consumption": 30
+        },
+        {
+          "id": "mog4ecg46r5a2",
+          "date": "2026-01-01T00:00:00.000Z",
+          "index": 150,
+          "consumption": 90
+        },
+        {
+          "id": "mog4f8s061wko",
+          "date": "2026-02-01T00:00:00.000Z",
+          "index": 500,
+          "consumption": 350
+        },
+        {
+          "id": "mog4ffysum5qh",
+          "date": "2026-03-01T00:00:00.000Z",
+          "index": 15234567986,
+          "consumption": 15234567486
+        },
+        {
+          "id": "mog4fppxf04qz",
+          "date": "2026-04-01T00:00:00.000Z",
+          "index": 16234567987,
+          "consumption": 1000000001
+        },
+        {
+          "id": "moivi6rlm8f50",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 17828282828,
+          "consumption": 1593714841,
+          "note": "sKSJAkkD LDadklAK kladkAKŞDSŞDA\nSDADA\nDASDAD\nADA\nDAD"
+        },
+        {
+          "id": "moiwu89ushagq",
+          "date": "2026-06-01T00:00:00.000Z",
+          "index": 19345678881,
+          "consumption": 1517396053,
+          "note": "1234567890098765432112345678900987654321123456789009876543211234567898"
+        },
+        {
+          "id": "molwx333b7ua2",
+          "date": "2026-07-01T00:00:00.000Z",
+          "index": 19421211212,
+          "consumption": 75532331,
+          "note": ""
+        },
+        {
+          "id": "molysucxj71tt",
+          "date": "2026-11-01T00:00:00.000Z",
+          "index": 21222222222,
+          "consumption": 1801011010,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mog1h466n7fde",
+      "name": "Tesis-2",
+      "createdAt": "2026-04-26T17:25:23.166Z",
+      "initialIndex": 0,
+      "readings": [
+        {
+          "id": "mog4gp0yjp5rs",
+          "date": "2026-01-01T00:00:00.000Z",
+          "index": 400,
+          "consumption": 400
+        },
+        {
+          "id": "mog4gw3i5oify",
+          "date": "2026-02-01T00:00:00.000Z",
+          "index": 1200,
+          "consumption": 800
+        },
+        {
+          "id": "mog4hddqlngui",
+          "date": "2026-03-01T00:00:00.000Z",
+          "index": 1300,
+          "consumption": 100
+        },
+        {
+          "id": "mog4hhfthlr8u",
+          "date": "2026-04-01T00:00:00.000Z",
+          "index": 1800,
+          "consumption": 500
+        }
+      ]
+    },
+    {
+      "id": "mol56um6kwgby",
+      "name": "Tesis-3",
+      "createdAt": "2026-04-30T07:08:13.566Z",
+      "initialIndex": 0,
+      "readings": [
+        {
+          "id": "mol57brlrbo6z",
+          "date": "2026-02-01T00:00:00.000Z",
+          "index": 1000,
+          "consumption": 1000,
+          "note": ""
+        },
+        {
+          "id": "mol580e8u0ywg",
+          "date": "2026-03-01T00:00:00.000Z",
+          "index": 2500,
+          "consumption": 1500,
+          "note": "23.00 da alındı"
+        },
+        {
+          "id": "mol593k8fooek",
+          "date": "2026-04-01T00:00:00.000Z",
+          "index": 4500,
+          "consumption": 2000,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "molxj0li1mlfc",
+      "name": "DSDA",
+      "createdAt": "2026-04-30T20:21:30.438Z",
+      "initialIndex": 0,
+      "unit": "",
+      "readings": [
+        {
+          "id": "molxj5wumndri",
+          "date": "2026-04-01T00:00:00.000Z",
+          "index": 214,
+          "consumption": 214,
+          "note": ""
+        }
+      ]
+    }
+  ],
+  "su": [
+    {
+      "id": "mog4ui6i90bn6",
+      "name": "Makeup-1",
+      "createdAt": "2026-04-26T18:59:46.698Z",
+      "initialIndex": 0,
+      "readings": [
+        {
+          "id": "mog5qcryys4vw",
+          "date": "2025-04-01T00:00:00.000Z",
+          "index": 10,
+          "consumption": 10
+        },
+        {
+          "id": "mog4uyn4juqrq",
+          "date": "2026-01-01T00:00:00.000Z",
+          "index": 100,
+          "consumption": 90
+        },
+        {
+          "id": "mog4vdso9s1h5",
+          "date": "2026-02-01T00:00:00.000Z",
+          "index": 170,
+          "consumption": 70
+        },
+        {
+          "id": "mog4vo0hvish8",
+          "date": "2026-03-01T00:00:00.000Z",
+          "index": 210,
+          "consumption": 40
+        },
+        {
+          "id": "mog4vv357x166",
+          "date": "2026-04-01T00:00:00.000Z",
+          "index": 350,
+          "consumption": 140
+        },
+        {
+          "id": "moivnrvj6rkuk",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 1111,
+          "consumption": 761,
+          "note": "aadkada"
+        },
+        {
+          "id": "mokf5zp369y0n",
+          "date": "2026-06-01T00:00:00.000Z",
+          "index": 21387128712,
+          "consumption": 21387127601,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mog4ulv7d2n3z",
+      "name": "Makeup-2",
+      "createdAt": "2026-04-26T18:59:51.475Z",
+      "initialIndex": 0,
+      "readings": [
+        {
+          "id": "mog5ltjfqaiif",
+          "date": "2022-01-01T00:00:00.000Z",
+          "index": 2,
+          "consumption": 2
+        },
+        {
+          "id": "mog5m0mk6gzsf",
+          "date": "2022-02-01T00:00:00.000Z",
+          "index": 3,
+          "consumption": 1
+        },
+        {
+          "id": "mog5mese2tdnp",
+          "date": "2022-03-01T00:00:00.000Z",
+          "index": 6,
+          "consumption": 3
+        },
+        {
+          "id": "mog4w4sdz098i",
+          "date": "2026-01-01T00:00:00.000Z",
+          "index": 45,
+          "consumption": 39
+        },
+        {
+          "id": "mog4w9nl8u88g",
+          "date": "2026-02-01T00:00:00.000Z",
+          "index": 135,
+          "consumption": 90
+        },
+        {
+          "id": "mog4wf1q72vck",
+          "date": "2026-03-01T00:00:00.000Z",
+          "index": 193,
+          "consumption": 58
+        },
+        {
+          "id": "mog4wiz3u4pzt",
+          "date": "2026-04-01T00:00:00.000Z",
+          "index": 200,
+          "consumption": 7
+        }
+      ]
+    },
+    {
+      "id": "mokgm1tacb1xb",
+      "name": "Makeup-3",
+      "createdAt": "2026-04-29T19:40:12.334Z",
+      "initialIndex": 0,
+      "readings": []
+    },
+    {
+      "id": "mokgmf8w411y5",
+      "name": "Makeup-4",
+      "createdAt": "2026-04-29T19:40:29.744Z",
+      "initialIndex": 0,
+      "readings": []
+    },
+    {
+      "id": "mokgmi4e6xqzj",
+      "name": "Makeup-5",
+      "createdAt": "2026-04-29T19:40:33.470Z",
+      "initialIndex": 0,
+      "readings": []
+    },
+    {
+      "id": "mol31yehti5me",
+      "name": "3 soğ kule",
+      "createdAt": "2026-04-30T06:08:25.961Z",
+      "initialIndex": 0,
+      "readings": [
+        {
+          "id": "mol32e07vimai",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 500,
+          "consumption": 500,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "monbdh028ozcu",
+      "name": "asfghk",
+      "createdAt": "2026-05-01T19:36:52.562Z",
+      "initialIndex": 9,
+      "unit": "",
+      "readings": [
+        {
+          "id": "monbe4dfsu7f0",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 65544,
+          "consumption": 65535,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "monbgf9hdv9fx",
+      "name": "deneme",
+      "createdAt": "2026-05-01T19:39:10.277Z",
+      "initialIndex": 0,
+      "unit": "",
+      "readings": [
+        {
+          "id": "monbgnvl1s3ji",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 2313,
+          "consumption": 2313,
+          "note": ""
+        }
+      ]
+    }
+  ],
+  "tesis": [
+    {
+      "id": "molxgoz62ctsz",
+      "name": "Azot Üretimi Nm3",
+      "createdAt": "2026-04-30T20:19:42.066Z",
+      "initialIndex": 0,
+      "unit": "Nm3",
+      "readings": [
+        {
+          "id": "molxk0zmqugf9",
+          "date": "2026-04-29T00:00:00.000Z",
+          "index": 1200000,
+          "consumption": 1200000,
+          "note": ""
+        },
+        {
+          "id": "molxnhwwb4tip",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 1100000,
+          "consumption": -100000,
+          "note": ""
+        },
+        {
+          "id": "molyyry1w47xt",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 6788,
+          "consumption": -1093212,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "molz5k0r7bvfg",
+      "name": "Tanktaki Sıvı Azot Miktarı",
+      "createdAt": "2026-04-30T21:07:01.659Z",
+      "initialIndex": 0,
+      "unit": "Ton",
+      "readings": [
+        {
+          "id": "mom0i6diqnehe",
+          "date": "2026-04-29T00:00:00.000Z",
+          "index": 21321412211,
+          "consumption": 21321412211,
+          "note": ""
+        },
+        {
+          "id": "molz7e81jf822",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 121,
+          "consumption": -21321412090,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mom03x94qpkgb",
+      "name": "Tanktaki Sıvı Azot Değişimi",
+      "createdAt": "2026-04-30T21:33:45.112Z",
+      "initialIndex": 0,
+      "unit": "Ton",
+      "readings": [
+        {
+          "id": "mom05ud0lal1p",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 645,
+          "consumption": 645,
+          "note": ""
+        },
+        {
+          "id": "mom1q5busvo7s",
+          "date": "2026-05-01T00:00:00.000Z",
+          "index": 424,
+          "consumption": -221,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mom04aeq1v2kz",
+      "name": "Yüksek Fırınlar Kullanımı",
+      "createdAt": "2026-04-30T21:34:02.162Z",
+      "initialIndex": 0,
+      "unit": "Nm3",
+      "readings": [
+        {
+          "id": "mom0i9ah8yagy",
+          "date": "2026-04-29T00:00:00.000Z",
+          "index": 21321412211,
+          "consumption": 21321412211,
+          "note": ""
+        },
+        {
+          "id": "mom05qiq0kwd5",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 4353,
+          "consumption": -21321407858,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mom04r20ve8xm",
+      "name": "Çelikhane Kullanımı",
+      "createdAt": "2026-04-30T21:34:23.736Z",
+      "initialIndex": 0,
+      "unit": "Nm3",
+      "readings": [
+        {
+          "id": "mom0idciuc3nl",
+          "date": "2026-04-29T00:00:00.000Z",
+          "index": 21321412211,
+          "consumption": 21321412211,
+          "note": ""
+        },
+        {
+          "id": "mom05p01c8e2t",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 5435,
+          "consumption": -21321406776,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mom04yest5zv7",
+      "name": "Sinter Kullanımı",
+      "createdAt": "2026-04-30T21:34:33.268Z",
+      "initialIndex": 0,
+      "unit": "Nm3",
+      "readings": [
+        {
+          "id": "mom0ilq1cs4pa",
+          "date": "2026-04-29T00:00:00.000Z",
+          "index": 21321412211,
+          "consumption": 21321412211,
+          "note": ""
+        },
+        {
+          "id": "mom05ngg9zi3u",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 342,
+          "consumption": -21321411869,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "mom0596c7medq",
+      "name": "Diğer Kullanımlar",
+      "createdAt": "2026-04-30T21:34:47.220Z",
+      "initialIndex": 0,
+      "unit": "Nm3",
+      "readings": [
+        {
+          "id": "mom0iivdnk3pa",
+          "date": "2026-04-29T00:00:00.000Z",
+          "index": 21321412211,
+          "consumption": 21321412211,
+          "note": ""
+        },
+        {
+          "id": "mom05lw12kuju",
+          "date": "2026-04-30T00:00:00.000Z",
+          "index": 231,
+          "consumption": -21321411980,
+          "note": ""
+        }
+      ]
+    }
+  ]
+}
